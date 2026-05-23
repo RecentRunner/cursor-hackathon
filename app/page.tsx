@@ -16,7 +16,7 @@ import { routes } from "@/lib/routes";
 
 export default function Home() {
   return (
-    <main className="min-h-svh flex flex-col">
+    <main className="flex min-h-svh flex-col">
       <Suspense fallback={null}>
         <LoggedInRedirect />
       </Suspense>

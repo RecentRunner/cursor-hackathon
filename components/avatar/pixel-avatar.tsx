@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-
-type AvatarMood = "happy" | "neutral" | "tired";
+import type { AvatarMood } from "@/lib/avatar-state";
 
 const moodStyles: Record<AvatarMood, string> = {
   happy: "bg-emerald-400 shadow-[0_0_0_4px_rgba(16,185,129,0.25)]",

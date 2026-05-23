@@ -5,6 +5,7 @@ export const routes = {
   signUpSuccess: "/auth/sign-up-success",
   onboardingQuiz: "/onboarding/quiz",
   avatar: "/avatar",
+  habits: "/habits",
   dailyQuiz: "/daily/quiz",
   shop: "/shop",
   profile: "/profile",
@@ -14,9 +15,21 @@ export type AppRoute = (typeof routes)[keyof typeof routes];
 
 export const appNavItems = [
   { href: routes.avatar, label: "Pet", shortLabel: "Pet" },
+  { href: routes.habits, label: "Habits", shortLabel: "Habits" },
   { href: routes.dailyQuiz, label: "Daily Quiz", shortLabel: "Quiz" },
   { href: routes.shop, label: "Shop", shortLabel: "Shop" },
   { href: routes.profile, label: "Profile", shortLabel: "Profile" },
+] as const;
+
+export type NavItem = (typeof appNavItems)[number];
+
+const appPaths = [
+  routes.avatar,
+  routes.habits,
+  routes.dailyQuiz,
+  routes.shop,
+  routes.profile,
+  routes.onboardingQuiz,
 ] as const;
 
 export function isAuthPath(pathname: string) {
@@ -24,5 +37,11 @@ export function isAuthPath(pathname: string) {
 }
 
 export function isPublicPath(pathname: string) {
-  return pathname === routes.home || isAuthPath(pathname);
+  return (
+    pathname === routes.home ||
+    isAuthPath(pathname) ||
+    appPaths.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`),
+    )
+  );
 }

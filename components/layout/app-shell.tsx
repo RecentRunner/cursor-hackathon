@@ -1,5 +1,3 @@
-import { AppNav } from "@/components/layout/app-nav";
-
 type AppShellProps = {
   children: React.ReactNode;
   title?: string;
@@ -8,7 +6,7 @@ type AppShellProps = {
 
 export function AppShell({ children, title, description }: AppShellProps) {
   return (
-    <div className="min-h-svh bg-background pb-24">
+    <div className="min-h-svh bg-background">
       {(title || description) && (
         <header className="border-b border-border/60 bg-card/40">
           <div className="mx-auto max-w-lg px-5 py-5">
@@ -22,7 +20,6 @@ export function AppShell({ children, title, description }: AppShellProps) {
         </header>
       )}
       <main className="mx-auto max-w-lg px-5 py-6">{children}</main>
-      <AppNav />
     </div>
   );
 }

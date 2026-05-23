@@ -8,7 +8,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={<div className="min-h-svh bg-background pb-24" />}>
+    <Suspense fallback={<div className="min-h-svh bg-background" />}>
       <AppAuthGate>{children}</AppAuthGate>
     </Suspense>
   );
