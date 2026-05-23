@@ -16,6 +16,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { routes } from "@/lib/routes";
+
 export function SignUpForm({
   className,
   ...props
@@ -44,7 +46,7 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}${routes.onboardingQuiz}`,
         },
       });
       if (error) throw error;

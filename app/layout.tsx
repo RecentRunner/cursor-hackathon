@@ -10,7 +10,7 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Habit Pet",
-  description: "Hackathon bootstrap for a Next.js and Supabase habit pet app.",
+  description: "Build habits, care for your pixel pet, and track wellness every day.",
 };
 
 const geistSans = Geist({
