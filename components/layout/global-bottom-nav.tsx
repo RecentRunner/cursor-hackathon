@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { AppNav } from "@/components/layout/app-nav";
+import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
+import { getOnboardingStatusClient } from "@/lib/onboarding-status";
 import { createClient } from "@/lib/supabase/client";
 
 export function GlobalBottomNav() {
@@ -16,9 +18,13 @@ export function GlobalBottomNav() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      setShowNav(
-        !!user && user.user_metadata?.onboarding_completed === true,
-      );
+      if (!user) {
+        setShowNav(false);
+        return;
+      }
+
+      const status = await getOnboardingStatusClient();
+      setShowNav(status?.appComplete === true);
     }
 
     void syncNavState();
@@ -29,7 +35,12 @@ export function GlobalBottomNav() {
       void syncNavState();
     });
 
-    return () => subscription.unsubscribe();
+    window.addEventListener(HABIT_PET_DATA_UPDATED_EVENT, syncNavState);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener(HABIT_PET_DATA_UPDATED_EVENT, syncNavState);
+    };
   }, []);
 
   if (!showNav) {

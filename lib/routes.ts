@@ -4,6 +4,7 @@ export const routes = {
   signUp: "/auth/sign-up",
   signUpSuccess: "/auth/sign-up-success",
   onboardingQuiz: "/onboarding/quiz",
+  onboardingCustomize: "/onboarding/customize",
   avatar: "/avatar",
   habits: "/habits",
   dailyQuiz: "/daily/quiz",
@@ -25,6 +26,10 @@ export type NavItem = (typeof appNavItems)[number];
 
 export function isAuthPath(pathname: string) {
   return pathname.startsWith("/auth");
+}
+
+export function isOnboardingPath(pathname: string) {
+  return pathname.startsWith("/onboarding");
 }
 
 export function isPublicPath(pathname: string) {

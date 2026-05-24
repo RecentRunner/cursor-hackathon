@@ -1,18 +1,12 @@
 import { redirect } from "next/navigation";
 
-import {
-  getSessionUser,
-  hasCompletedOnboarding,
-} from "@/lib/auth-helpers";
-import { routes } from "@/lib/routes";
+import { getOnboardingRedirectPath, getSessionUser } from "@/lib/auth-helpers";
 
 export async function LoggedInRedirect() {
   const user = await getSessionUser();
 
   if (user) {
-    redirect(
-      hasCompletedOnboarding(user) ? routes.avatar : routes.onboardingQuiz,
-    );
+    redirect(await getOnboardingRedirectPath());
   }
 
   return null;

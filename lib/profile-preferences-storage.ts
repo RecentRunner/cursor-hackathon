@@ -178,7 +178,10 @@ function getOnboardingAnswersFromMetadata(
 async function saveProfileRow(
   userId: string,
   preferences: ProfilePreferences,
-  options?: { markOnboardingComplete?: boolean },
+  options?: {
+    markOnboardingComplete?: boolean;
+    markQuizComplete?: boolean;
+  },
 ) {
   const supabase = createClient();
   const serialized = serializeFocusTopicsField(preferences);
@@ -186,9 +189,10 @@ async function saveProfileRow(
     serialized,
     [serialized],
   ];
-  const onboardingFields = options?.markOnboardingComplete
-    ? { onboarding_complete: true }
-    : {};
+  const onboardingFields = {
+    ...(options?.markOnboardingComplete ? { onboarding_complete: true } : {}),
+    ...(options?.markQuizComplete ? { onboarding_quiz_complete: true } : {}),
+  };
 
   let lastError: string | null = null;
 
@@ -307,10 +311,7 @@ export async function saveProfilePreferences(preferences: ProfilePreferences) {
   return normalizedPreferences;
 }
 
-export async function saveOnboardingPreferences(
-  focusTopic: string,
-  avatarVibe: string,
-) {
+export async function saveOnboardingPreferences(focusTopic: string) {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
@@ -318,16 +319,15 @@ export async function saveOnboardingPreferences(
   }
 
   const supabase = createClient();
-  const preferences = normalizePreferences({ focusTopic, avatarVibe });
+  const preferences = normalizePreferences({ focusTopic });
 
-  await saveProfileRow(userId, preferences, { markOnboardingComplete: true });
+  await saveProfileRow(userId, preferences, { markQuizComplete: true });
 
   const { error: authError } = await supabase.auth.updateUser({
     data: {
-      onboarding_completed: true,
+      onboarding_quiz_completed: true,
       onboarding_answers: {
         focus: preferences.focusTopic,
-        avatarVibe: preferences.avatarVibe,
       },
     },
   });

@@ -1,8 +1,36 @@
-insert into shop_items (id, name, type, price, image_path)
+-- Character layer styles sold in the shop (id = variant id, type = layer id).
+
+delete from public.user_items
+where item_id in ('hat_blue', 'glasses_round', 'room_sunset');
+
+delete from public.shop_items
+where id in (
+  'hat_blue',
+  'glasses_round',
+  'room_sunset',
+  'pants-1',
+  'pants-2',
+  'shoes-1',
+  'shoes-2',
+  'torso-1',
+  'torso-2',
+  'eyes-1',
+  'eyes-2',
+  'head-1',
+  'head-2'
+);
+
+insert into public.shop_items (id, name, type, price, image_path)
 values
-  ('hat_blue', 'Blue Hat', 'accessory', 20, '/items/hat-blue.png'),
-  ('glasses_round', 'Round Glasses', 'accessory', 30, '/items/glasses-round.png'),
-  ('room_sunset', 'Sunset Room', 'background', 40, '/backgrounds/room-sunset.png')
+  ('pants-3', 'Pants 3', 'pants', 30, '/character/pants/pants-3.png'),
+  ('shoes-3', 'Shoes 3', 'shoes', 30, '/character/shoes/shoes-3.png'),
+  ('torso-3', 'Torso 3', 'torso', 35, '/character/torso/torso-3.png'),
+  ('torso-4', 'Torso 4', 'torso', 40, '/character/torso/torso-4.png'),
+  ('head-3', 'Head 3', 'head', 40, '/character/head/head-3.png'),
+  ('head-4', 'Head 4', 'head', 45, '/character/head/head-4.png'),
+  ('head-5', 'Head 5', 'head', 50, '/character/head/head-5.png'),
+  ('head-6', 'Head 6', 'head', 55, '/character/head/head-6.png'),
+  ('head-7', 'Head 7', 'head', 60, '/character/head/head-7.png')
 on conflict (id) do update
 set
   name = excluded.name,

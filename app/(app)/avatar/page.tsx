@@ -1,19 +1,17 @@
-import { AvatarStatusCard } from "@/components/avatar/avatar-status-card";
-import { DailyQuizLinkButton } from "@/components/daily-quiz/daily-quiz-link-button";
-import { HabitTracker } from "@/components/habits/habit-tracker";
+import { Suspense } from "react";
+
+import { AvatarPageContent } from "@/components/avatar/avatar-page-content";
 import { AppShell } from "@/components/layout/app-shell";
 
 export default function AvatarPage() {
   return (
     <AppShell
       title="Your Habit Pet"
-      description="Today's tasks are personalized by AI from your quiz, journal, and preferences."
+      description="Customize your pet, complete AI-personalized daily tasks, and track their mood from your wellness check-in."
     >
-      <div className="flex flex-col gap-6">
-        <AvatarStatusCard />
-        <HabitTracker />
-        <DailyQuizLinkButton />
-      </div>
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
+        <AvatarPageContent />
+      </Suspense>
     </AppShell>
   );
 }
