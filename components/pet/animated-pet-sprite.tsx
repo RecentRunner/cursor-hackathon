@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 
 import { CharacterLayerPreview } from "@/components/character/character-layer-preview";
 import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
+import {
+  PET_WANDER_BOUNDS,
+  PET_WANDER_START,
+} from "@/lib/pet-wander-bounds";
 import { cn } from "@/lib/utils";
 
 type AnimatedPetSpriteProps = {
@@ -17,10 +21,8 @@ type WanderPosition = {
   facing: "left" | "right";
 };
 
-const MIN_X = 24;
-const MAX_X = 72;
-const MIN_Y = 34;
-const MAX_Y = 62;
+const { minX: MIN_X, maxX: MAX_X, minY: MIN_Y, maxY: MAX_Y } =
+  PET_WANDER_BOUNDS;
 
 function randomPosition(current?: WanderPosition): WanderPosition {
   let next: WanderPosition = {
@@ -52,8 +54,8 @@ export function AnimatedPetSprite({
   className,
 }: AnimatedPetSpriteProps) {
   const [position, setPosition] = useState<WanderPosition>({
-    x: 48,
-    y: 48,
+    x: PET_WANDER_START.x,
+    y: PET_WANDER_START.y,
     facing: "right",
   });
 
@@ -82,7 +84,7 @@ export function AnimatedPetSprite({
       style={{
         left: `${position.x}%`,
         top: `${position.y}%`,
-        transform: "translate(-50%, -50%)",
+        transform: "translate(-50%, -100%)",
         transition: "left 1.8s steps(10), top 1.8s steps(10)",
       }}
     >
