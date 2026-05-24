@@ -123,6 +123,9 @@ function parseProfilePreferences(
         dailyReminderTime:
           parsed.dailyReminderTime ??
           defaultProfilePreferences.dailyReminderTime,
+        dailyReminderDelivery:
+          parsed.dailyReminderDelivery ??
+          defaultProfilePreferences.dailyReminderDelivery,
       };
     }
   } catch {

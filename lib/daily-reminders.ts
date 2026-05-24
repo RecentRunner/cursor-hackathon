@@ -1,5 +1,11 @@
 import type { DailyReminderStatus } from "@/lib/daily-reminder-status";
+import { showInAppDailyReminder } from "@/lib/in-app-reminders";
 import { routes } from "@/lib/routes";
+import {
+  type ReminderDeliveryMethod,
+  usesInAppReminders,
+  usesSystemReminders,
+} from "@/lib/reminder-delivery";
 
 const REMINDER_SENT_STORAGE_PREFIX = "habit-pet-daily-reminder-sent";
 const REMINDER_CHECK_INTERVAL_MS = 15_000;
@@ -135,7 +141,7 @@ export function buildDailyReminderNotification(status: DailyReminderStatus) {
   };
 }
 
-export function showDailyReminderNotification(
+export function showSystemDailyReminderNotification(
   status: DailyReminderStatus,
 ) {
   if (!isNotificationSupported() || Notification.permission !== "granted") {
@@ -160,7 +166,7 @@ export function showDailyReminderNotification(
   return true;
 }
 
-export function showTestDailyReminderNotification(
+export function showTestSystemDailyReminderNotification(
   status: DailyReminderStatus,
 ) {
   if (!isNotificationSupported() || Notification.permission !== "granted") {
@@ -169,7 +175,7 @@ export function showTestDailyReminderNotification(
 
   const { body, targetUrl } = buildDailyReminderNotification(status);
   const notification = new Notification("Test: Habit Pet reminder", {
-    body: `This is a test notification. ${body}`,
+    body: `This is a browser test notification. ${body}`,
     tag: `habit-pet-daily-reminder-test-${Date.now()}`,
   });
 
@@ -183,6 +189,61 @@ export function showTestDailyReminderNotification(
   };
 
   return true;
+}
+
+export function deliverDailyReminder(
+  status: DailyReminderStatus,
+  deliveryMethod: ReminderDeliveryMethod,
+) {
+  let delivered = false;
+
+  if (usesInAppReminders(deliveryMethod)) {
+    const { title, body, targetUrl } = buildDailyReminderNotification(status);
+    delivered =
+      showInAppDailyReminder({ title, body, targetUrl }) || delivered;
+  }
+
+  if (usesSystemReminders(deliveryMethod)) {
+    delivered =
+      showSystemDailyReminderNotification(status) || delivered;
+  }
+
+  return delivered;
+}
+
+export function deliverTestDailyReminder(
+  status: DailyReminderStatus,
+  deliveryMethod: ReminderDeliveryMethod,
+) {
+  let delivered = false;
+
+  if (usesInAppReminders(deliveryMethod)) {
+    const { title, body, targetUrl } = buildDailyReminderNotification(status);
+    delivered =
+      showInAppDailyReminder({
+        title: `Test: ${title}`,
+        body: `This is an in-app test reminder. ${body}`,
+        targetUrl,
+        isTest: true,
+      }) || delivered;
+  }
+
+  if (usesSystemReminders(deliveryMethod)) {
+    delivered =
+      showTestSystemDailyReminderNotification(status) || delivered;
+  }
+
+  return delivered;
+}
+
+/** @deprecated Use showSystemDailyReminderNotification */
+export function showDailyReminderNotification(status: DailyReminderStatus) {
+  return showSystemDailyReminderNotification(status);
+}
+
+/** @deprecated Use showTestSystemDailyReminderNotification */
+export function showTestDailyReminderNotification(status: DailyReminderStatus) {
+  return showTestSystemDailyReminderNotification(status);
 }
 
 export function getReminderCheckIntervalMs() {

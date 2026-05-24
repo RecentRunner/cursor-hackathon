@@ -45,6 +45,7 @@ function parseStoredPreferences(
       avatarVibe: "Calm",
       dailyReminderEnabled: false,
       dailyReminderTime: "20:00",
+      dailyReminderDelivery: "in_app",
     };
   }
 
@@ -60,6 +61,7 @@ function parseStoredPreferences(
       avatarVibe: "Calm",
       dailyReminderEnabled: false,
       dailyReminderTime: "20:00",
+      dailyReminderDelivery: "in_app",
     };
   }
 
@@ -68,5 +70,6 @@ function parseStoredPreferences(
     avatarVibe: "Calm",
     dailyReminderEnabled: false,
     dailyReminderTime: "20:00",
+    dailyReminderDelivery: "in_app",
   };
 }

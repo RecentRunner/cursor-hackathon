@@ -5,17 +5,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import { getDailyReminderStatus } from "@/lib/daily-reminder-status";
 import {
+  deliverDailyReminder,
   getNotificationPermissionState,
   getReminderCheckIntervalMs,
   hasReachedReminderTime,
   markDailyReminderSentToday,
-  showDailyReminderNotification,
   wasDailyReminderSentToday,
 } from "@/lib/daily-reminders";
 import {
   getProfilePreferences,
   type ProfilePreferences,
 } from "@/lib/profile-preferences-storage";
+import { usesInAppReminders, usesSystemReminders } from "@/lib/reminder-delivery";
 
 export function DailyReminderProvider() {
   const [preferences, setPreferences] = useState<ProfilePreferences | null>(
@@ -47,7 +48,11 @@ export function DailyReminderProvider() {
           return;
         }
 
-        if (getNotificationPermissionState() !== "granted") {
+        if (
+          usesSystemReminders(activePreferences.dailyReminderDelivery) &&
+          !usesInAppReminders(activePreferences.dailyReminderDelivery) &&
+          getNotificationPermissionState() !== "granted"
+        ) {
           return;
         }
 
@@ -62,7 +67,10 @@ export function DailyReminderProvider() {
         }
 
         if (status.needsReminder) {
-          showDailyReminderNotification(status);
+          deliverDailyReminder(
+            status,
+            activePreferences.dailyReminderDelivery,
+          );
         }
 
         markDailyReminderSentToday(status.dateKey);

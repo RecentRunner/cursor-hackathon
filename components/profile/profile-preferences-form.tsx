@@ -17,14 +17,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   clearDailyReminderSentToday,
+  deliverTestDailyReminder,
   getNotificationPermissionLabel,
   getNotificationPermissionState,
   isNotificationSupported,
   requestNotificationPermission,
-  showTestDailyReminderNotification,
 } from "@/lib/daily-reminders";
 import { getDailyReminderStatus } from "@/lib/daily-reminder-status";
 import { getTodayDateKey } from "@/lib/habits-storage";
+import {
+  reminderDeliveryOptions,
+  usesInAppReminders,
+  usesSystemReminders,
+  type ReminderDeliveryMethod,
+} from "@/lib/reminder-delivery";
 import {
   avatarVibeOptions,
   defaultProfilePreferences,
@@ -86,7 +92,8 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
 
       if (
         "dailyReminderEnabled" in updates ||
-        "dailyReminderTime" in updates
+        "dailyReminderTime" in updates ||
+        "dailyReminderDelivery" in updates
       ) {
         clearDailyReminderSentToday(getTodayDateKey());
       }
@@ -102,37 +109,16 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
     }
   };
 
-  const handleDailyReminderToggle = async (checked: boolean) => {
-    if (checked) {
-      if (!isNotificationSupported()) {
-        setError("This browser does not support notifications.");
-        return;
-      }
-
-      const permission = await requestNotificationPermission();
-      setNotificationPermission(permission);
-
-      if (permission !== "granted") {
-        setError(
-          permission === "denied"
-            ? "Notifications are blocked. Enable them in your browser settings to use daily reminders."
-            : "Notification permission was not granted.",
-        );
-        return;
-      }
+  const ensureSystemReminderPermission = async (
+    deliveryMethod: ReminderDeliveryMethod,
+  ) => {
+    if (!usesSystemReminders(deliveryMethod)) {
+      return true;
     }
 
-    setError(null);
-    await updatePreferences({ dailyReminderEnabled: checked });
-  };
-
-  const handleTestNotification = async () => {
-    setNotificationMessage(null);
-    setError(null);
-
     if (!isNotificationSupported()) {
-      setError("This browser does not support notifications.");
-      return;
+      setError("This browser does not support browser (OS) notifications.");
+      return false;
     }
 
     const permission = await requestNotificationPermission();
@@ -141,22 +127,86 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
     if (permission !== "granted") {
       setError(
         permission === "denied"
-          ? "Notifications are blocked. Enable them in your browser settings."
-          : "Notification permission was not granted.",
+          ? "Browser notifications are blocked. Enable them in your browser settings or choose In-app delivery."
+          : "Browser notification permission was not granted.",
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleDailyReminderToggle = async (checked: boolean) => {
+    if (checked) {
+      const allowed = await ensureSystemReminderPermission(
+        preferences.dailyReminderDelivery,
+      );
+
+      if (!allowed) {
+        return;
+      }
+    }
+
+    setError(null);
+    await updatePreferences({ dailyReminderEnabled: checked });
+  };
+
+  const handleDeliveryMethodChange = async (
+    deliveryMethod: ReminderDeliveryMethod,
+  ) => {
+    if (
+      preferences.dailyReminderEnabled &&
+      usesSystemReminders(deliveryMethod)
+    ) {
+      const allowed = await ensureSystemReminderPermission(deliveryMethod);
+
+      if (!allowed) {
+        return;
+      }
+    }
+
+    setError(null);
+    await updatePreferences({ dailyReminderDelivery: deliveryMethod });
+  };
+
+  const handleTestNotification = async () => {
+    setNotificationMessage(null);
+    setError(null);
+
+    const deliveryMethod = preferences.dailyReminderDelivery;
+
+    if (usesSystemReminders(deliveryMethod)) {
+      const allowed = await ensureSystemReminderPermission(deliveryMethod);
+
+      if (!allowed) {
+        return;
+      }
+    }
+
+    const status = await getDailyReminderStatus();
+    const shown = deliverTestDailyReminder(status, deliveryMethod);
+
+    if (!shown) {
+      setError("Could not show a test reminder.");
+      return;
+    }
+
+    if (deliveryMethod === "in_app") {
+      setNotificationMessage(
+        "In-app test reminder sent. Look for the banner above the bottom navigation.",
       );
       return;
     }
 
-    const status = await getDailyReminderStatus();
-    const shown = showTestDailyReminderNotification(status);
-
-    if (!shown) {
-      setError("Could not show a test notification.");
+    if (deliveryMethod === "system") {
+      setNotificationMessage(
+        "Browser test notification sent. Check your browser or OS notification center.",
+      );
       return;
     }
 
     setNotificationMessage(
-      "Test notification sent. Check the corner of your screen or Windows notification center.",
+      "Test reminder sent in-app and through your browser notification center.",
     );
   };
 
@@ -239,19 +289,44 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
             <Label htmlFor="daily-reminder">Daily reminder</Label>
             <Checkbox
               id="daily-reminder"
-              disabled={isSaving || !isNotificationSupported()}
+              disabled={isSaving}
               checked={preferences.dailyReminderEnabled}
               onCheckedChange={(checked) =>
                 void handleDailyReminderToggle(checked === true)
               }
             />
           </div>
-          <div className="flex items-center justify-between rounded-lg border px-3 py-2">
-            <span className="text-sm">Browser permission</span>
-            <Badge variant="secondary">
-              {getNotificationPermissionLabel(notificationPermission)}
-            </Badge>
+          <div className="space-y-2">
+            <Label>Reminder delivery</Label>
+            <div className="space-y-2">
+              {reminderDeliveryOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => void handleDeliveryMethodChange(option.value)}
+                  className={`w-full rounded-lg border px-3 py-3 text-left transition-colors ${
+                    preferences.dailyReminderDelivery === option.value
+                      ? "border-primary bg-primary/10"
+                      : "hover:bg-muted/40"
+                  }`}
+                >
+                  <p className="text-sm font-medium">{option.label}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {option.description}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
+          {usesSystemReminders(preferences.dailyReminderDelivery) ? (
+            <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+              <span className="text-sm">Browser permission</span>
+              <Badge variant="secondary">
+                {getNotificationPermissionLabel(notificationPermission)}
+              </Badge>
+            </div>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="reminder-time">Daily reminder time</Label>
             <Input
@@ -265,21 +340,19 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Reminders use your browser&apos;s local time and notify you once
-            per day when the quiz or habits are still incomplete. Keep this app
-            open in a tab for reminders to fire. On Windows, check Focus Assist
-            if notifications are hidden.
+            In-app reminders appear inside Habit Pet while a tab is open.
+            Browser (OS) reminders use the Web Notifications API and may appear
+            in your system notification center. Reminders fire once per day at
+            your chosen local time.
           </p>
           <Button
             type="button"
             variant="outline"
             className="w-full"
-            disabled={
-              isSaving || notificationPermission !== "granted"
-            }
+            disabled={isSaving}
             onClick={() => void handleTestNotification()}
           >
-            Send test notification
+            Send test reminder
           </Button>
           {notificationMessage ? (
             <p className="text-xs text-emerald-600">{notificationMessage}</p>

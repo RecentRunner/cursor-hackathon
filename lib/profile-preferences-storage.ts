@@ -1,4 +1,8 @@
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
+import {
+  normalizeReminderDeliveryMethod,
+  type ReminderDeliveryMethod,
+} from "@/lib/reminder-delivery";
 import { createClient } from "@/lib/supabase/client";
 
 export type ProfilePreferences = {
@@ -6,6 +10,7 @@ export type ProfilePreferences = {
   avatarVibe: string;
   dailyReminderEnabled: boolean;
   dailyReminderTime: string;
+  dailyReminderDelivery: ReminderDeliveryMethod;
 };
 
 type StoredProfilePreferences = {
@@ -13,6 +18,7 @@ type StoredProfilePreferences = {
   avatarVibe?: string;
   dailyReminderEnabled?: boolean;
   dailyReminderTime?: string;
+  dailyReminderDelivery?: string;
 };
 
 type ProfileRow = {
@@ -34,6 +40,7 @@ export const defaultProfilePreferences: ProfilePreferences = {
   avatarVibe: "Calm",
   dailyReminderEnabled: false,
   dailyReminderTime: "20:00",
+  dailyReminderDelivery: "in_app",
 };
 
 function isFocusTopic(value: string) {
@@ -71,6 +78,9 @@ function normalizePreferences(
       defaultProfilePreferences.dailyReminderEnabled,
     dailyReminderTime:
       partial.dailyReminderTime ?? defaultProfilePreferences.dailyReminderTime,
+    dailyReminderDelivery: normalizeReminderDeliveryMethod(
+      partial.dailyReminderDelivery,
+    ),
   };
 }
 
@@ -79,7 +89,7 @@ function parseStoredPreferencesJson(raw: string): Partial<ProfilePreferences> {
     const parsed = JSON.parse(raw) as StoredProfilePreferences;
 
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed;
+      return parsed as Partial<ProfilePreferences>;
     }
   } catch {
     return { focusTopic: raw };
@@ -112,6 +122,7 @@ function serializeFocusTopicsField(preferences: ProfilePreferences) {
     avatarVibe: preferences.avatarVibe,
     dailyReminderEnabled: preferences.dailyReminderEnabled,
     dailyReminderTime: preferences.dailyReminderTime,
+    dailyReminderDelivery: preferences.dailyReminderDelivery,
   };
 
   return JSON.stringify(payload);
