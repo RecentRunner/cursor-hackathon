@@ -247,13 +247,13 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
     try {
       await resetTodaysDailyQuiz();
       setQuizResetMessage(
-        "Today's quiz was reset. Open the Quiz tab to take it again.",
+        "Today's check-in was reset. Open the Bit page to complete it again.",
       );
     } catch (resetError) {
       setError(
         resetError instanceof Error
           ? resetError.message
-          : "Could not reset today's quiz.",
+          : "Could not reset today's check-in.",
       );
     } finally {
       setIsResettingQuiz(false);
@@ -337,7 +337,7 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
         <CardHeader>
           <CardTitle className="text-base">Notification preferences</CardTitle>
           <CardDescription>
-            Control reminders for your daily quiz and habits.
+            Control reminders for your daily check-in and habits.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -425,7 +425,7 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Reset clears today&apos;s wellness quiz entry so you can complete it
+            Reset clears today&apos;s wellness check-in entry so you can complete it
             again immediately. Demo points are for testing the shop only.
           </p>
           <Button
@@ -449,7 +449,7 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
             disabled={isSaving || isResettingQuiz}
             onClick={() => void handleResetDailyQuiz()}
           >
-            {isResettingQuiz ? "Resetting..." : "Reset today's quiz"}
+            {isResettingQuiz ? "Resetting..." : "Reset today's check-in"}
           </Button>
           {quizResetMessage ? (
             <p className="text-xs text-emerald-600">{quizResetMessage}</p>

@@ -121,7 +121,7 @@ export function buildDailyReminderNotification(status: DailyReminderStatus) {
   if (!status.quizCompleted && status.incompleteTaskCount > 0) {
     return {
       title: "Time for your daily check-in",
-      body: `Complete today's wellness quiz and ${status.incompleteTaskCount} remaining habit${status.incompleteTaskCount === 1 ? "" : "s"}.`,
+      body: `Complete today's wellness check-in and ${status.incompleteTaskCount} remaining habit${status.incompleteTaskCount === 1 ? "" : "s"}.`,
       targetUrl,
     };
   }
@@ -129,7 +129,7 @@ export function buildDailyReminderNotification(status: DailyReminderStatus) {
   if (!status.quizCompleted) {
     return {
       title: "Time for your daily check-in",
-      body: "Complete today's wellness quiz to keep your bit in good spirits.",
+      body: "Complete today's wellness check-in to keep your bit in good spirits.",
       targetUrl,
     };
   }

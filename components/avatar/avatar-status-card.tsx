@@ -94,21 +94,21 @@ export function AvatarStatusCard({ customization }: AvatarStatusCardProps) {
             Health {condition.health}/{WELLNESS_SCALE_MAX}
           </Badge>
           <Badge variant={hasCheckedInToday ? "default" : "outline"}>
-            {hasCheckedInToday ? "Checked in today" : "Quiz pending"}
+            {hasCheckedInToday ? "Checked in today" : "Check-in pending"}
           </Badge>
         </div>
         <p className="text-center text-sm text-muted-foreground">
           {hasCheckedInToday
             ? completedTaskCount > 0
-              ? `Your bit reacts to today's quiz and ${completedTaskCount} completed task${completedTaskCount === 1 ? "" : "s"}. Meals, hydration, sleep, and relaxing habits boost health and mood.`
+              ? `Your bit reacts to today's check-in and ${completedTaskCount} completed task${completedTaskCount === 1 ? "" : "s"}. Meals, hydration, sleep, and relaxing habits boost health and mood.`
               : "Your bit is reacting to today's wellness check-in. Complete habits to boost mood, energy, and health."
             : completedTaskCount > 0
-              ? "Complete today's quiz for a full wellness read, then keep completing habits to boost your bit."
-              : "Complete today's quiz to update your bit's mood, energy, and health."}
+              ? "Complete today's check-in for a full wellness read, then keep completing habits to boost your bit."
+              : "Complete today's check-in to update your bit's mood, energy, and health."}
         </p>
         {!hasCheckedInToday ? (
           <Button asChild className="w-full">
-            <Link href={`${routes.avatar}#bit-daily-quiz`}>Take today&apos;s quiz</Link>
+            <Link href={`${routes.avatar}#bit-daily-check-in`}>Start daily check-in</Link>
           </Button>
         ) : null}
       </CardContent>

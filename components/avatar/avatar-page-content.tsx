@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { DailyQuizForm } from "@/components/daily-quiz/daily-quiz-form";
 import { HabitTracker } from "@/components/habits/habit-tracker";
+import { JournalCalendar } from "@/components/journal/journal-calendar";
 import { PetHabitat } from "@/components/pet/pet-habitat";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import {
@@ -37,6 +38,14 @@ export function AvatarPageContent() {
     };
   }, [loadCustomization]);
 
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+
+    if (hash === "bit-daily-quiz") {
+      window.location.hash = "bit-daily-check-in";
+    }
+  }, []);
+
   if (loadError) {
     return <p className="text-xs text-red-500">{loadError}</p>;
   }
@@ -66,9 +75,13 @@ export function AvatarPageContent() {
         <div id="bit-daily-tasks">
           <HabitTracker mode="daily" />
         </div>
-        <div id="bit-daily-quiz">
+        <div id="bit-daily-check-in">
           <DailyQuizForm />
         </div>
+      </section>
+
+      <section className="w-full pt-8">
+        <JournalCalendar />
       </section>
     </div>
   );

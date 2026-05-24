@@ -23,14 +23,14 @@ export function DailyQuizLinkButton() {
   if (!isReady || isCompleted) {
     return (
       <Button className="w-full" variant="outline" disabled>
-        Open daily quiz
+        Open daily check-in
       </Button>
     );
   }
 
   return (
     <Button asChild className="w-full" variant="outline">
-      <Link href={`${routes.avatar}#bit-daily-quiz`}>Open daily quiz</Link>
+      <Link href={`${routes.avatar}#bit-daily-check-in`}>Open daily check-in</Link>
     </Button>
   );
 }

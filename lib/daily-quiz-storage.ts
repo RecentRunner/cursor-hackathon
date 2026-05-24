@@ -44,7 +44,7 @@ export async function resetTodaysDailyQuiz() {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
-    throw new Error("You must be signed in to reset today's quiz.");
+    throw new Error("You must be signed in to reset today's check-in.");
   }
 
   const supabase = createClient();
@@ -191,6 +191,89 @@ export async function saveDailyQuizSubmission(
   journal = "",
 ) {
   return saveDailyEntry(answers, journal);
+}
+
+export type DailyEntrySummary = {
+  date: string;
+  hasJournal: boolean;
+};
+
+const DAILY_ENTRY_SELECT =
+  "entry_date, mood, stress, energy, sleep_hours, sleep_quality, journal";
+
+function formatDateKey(date: Date) {
+  return date.toLocaleDateString("en-CA");
+}
+
+function getMonthDateBounds(year: number, month: number) {
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0);
+
+  return {
+    startKey: formatDateKey(monthStart),
+    endKey: formatDateKey(monthEnd),
+  };
+}
+
+export async function getDailyEntrySummariesForMonth(
+  year: number,
+  month: number,
+): Promise<DailyEntrySummary[]> {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return [];
+  }
+
+  const { startKey, endKey } = getMonthDateBounds(year, month);
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("daily_entries")
+    .select("entry_date, journal")
+    .eq("user_id", userId)
+    .gte("entry_date", startKey)
+    .lte("entry_date", endKey)
+    .order("entry_date", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => ({
+    date: row.entry_date as string,
+    hasJournal: Boolean((row.journal as string | null)?.trim()),
+  }));
+}
+
+export async function getDailyEntryByDate(
+  dateKey: string,
+): Promise<DailyQuizSubmission | null> {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("daily_entries")
+    .select(DAILY_ENTRY_SELECT)
+    .eq("user_id", userId)
+    .eq("entry_date", dateKey)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const row = data?.[0];
+
+  if (!row) {
+    return null;
+  }
+
+  return mapRowToSubmission(row as DailyEntryRow);
 }
 
 export async function getAvatarConditionForToday(): Promise<AvatarCondition | null> {

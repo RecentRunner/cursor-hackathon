@@ -138,7 +138,7 @@ export function DailyQuizForm() {
 
   if (!isReady) {
     return (
-      <p className="text-sm text-muted-foreground">Loading today&apos;s quiz...</p>
+      <p className="text-sm text-muted-foreground">Loading today&apos;s check-in...</p>
     );
   }
 
@@ -155,7 +155,7 @@ export function DailyQuizForm() {
             </div>
             <div className="space-y-1">
               <p className="text-lg font-semibold tracking-tight">
-                Today&apos;s quiz is complete
+                Today&apos;s check-in is complete
               </p>
               <p className="text-sm text-muted-foreground">
                 Your answers are saved below. Come back tomorrow for your next
@@ -264,7 +264,7 @@ export function DailyQuizForm() {
 
       {!isCompleted ? (
         <Button className="w-full" disabled={!canSubmit} onClick={handleSubmit}>
-          {isSubmitting ? "Saving..." : "Complete daily quiz"}
+          {isSubmitting ? "Saving..." : "Complete daily check-in"}
         </Button>
       ) : null}
     </div>

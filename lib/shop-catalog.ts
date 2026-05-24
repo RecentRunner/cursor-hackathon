@@ -1,7 +1,11 @@
 import { isShopOnlyStyleVariant } from "@/lib/character/variant-access";
 import type { CharacterLayerId } from "@/lib/character/presets";
-import { CHARACTER_LAYERS, NONE_VARIANT_ID } from "@/lib/character/presets";
-import { getShopRoomBackgrounds } from "@/lib/room-backgrounds";
+import {
+  CHARACTER_LAYERS,
+  getVariantDisplayName,
+  NONE_VARIANT_ID,
+} from "@/lib/character/presets";
+import { getRoomBackground, getShopRoomBackgrounds } from "@/lib/room-backgrounds";
 
 export type ShopLayerId = Exclude<CharacterLayerId, "skin">;
 
@@ -93,6 +97,14 @@ function getDefaultPriceForLayer(layerId: ShopLayerId, variantId: string) {
 
 export function getLayerLabel(layerId: ShopLayerId) {
   return CHARACTER_LAYERS.find((layer) => layer.id === layerId)?.label ?? layerId;
+}
+
+export function getShopItemDisplayName(item: ShopItemRecord): string {
+  if (item.type === "room") {
+    return getRoomBackground(item.id).name;
+  }
+
+  return getVariantDisplayName(item.id, item.name);
 }
 
 export function findShopItemById(
