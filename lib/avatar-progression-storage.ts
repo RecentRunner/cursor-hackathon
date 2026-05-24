@@ -72,3 +72,17 @@ export async function adjustCoins(delta: number): Promise<number> {
 
   return nextCoins;
 }
+
+export async function spendCoins(amount: number): Promise<number> {
+  if (amount <= 0) {
+    throw new Error("Purchase amount must be greater than zero.");
+  }
+
+  const currentCoins = await getCoins();
+
+  if (currentCoins < amount) {
+    throw new Error("Not enough points.");
+  }
+
+  return adjustCoins(-amount);
+}
