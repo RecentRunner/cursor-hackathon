@@ -175,7 +175,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
   const [customHabits, setCustomHabits] = useState<Habit[]>([]);
   const [newHabitLabel, setNewHabitLabel] = useState("");
-  const [focusTopics, setFocusTopics] = useState<string[]>([]);
+  const [focusTopic, setFocusTopic] = useState<string | null>(null);
   const [quizCompletedToday, setQuizCompletedToday] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -218,7 +218,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       ]);
       setDailyTasks(tasks);
       setCustomHabits(customs);
-      setFocusTopics(getProfilePreferences().focusTopics);
+      setFocusTopic((await getProfilePreferences()).focusTopic);
       setQuizCompletedToday(await hasCompletedDailyQuizToday());
       setIsReady(true);
     } catch (refreshError) {
@@ -389,7 +389,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>
               Focus topics:{" "}
-              {focusTopics.length > 0 ? focusTopics.join(", ") : "None selected"}
+              {focusTopic ?? "None selected"}
             </p>
             <p>
               Daily quiz today:{" "}

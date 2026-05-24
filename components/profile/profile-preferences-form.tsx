@@ -33,24 +33,46 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
     defaultProfilePreferences,
   );
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setPreferences(getProfilePreferences());
-    setIsReady(true);
+    async function loadPreferences() {
+      try {
+        setPreferences(await getProfilePreferences());
+      } catch (loadError) {
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Could not load profile preferences.",
+        );
+      } finally {
+        setIsReady(true);
+      }
+    }
+
+    void loadPreferences();
   }, []);
 
-  const updatePreferences = (updates: Partial<ProfilePreferences>) => {
+  const updatePreferences = async (updates: Partial<ProfilePreferences>) => {
     const nextPreferences = { ...preferences, ...updates };
     setPreferences(nextPreferences);
-    saveProfilePreferences(nextPreferences);
-  };
+    setIsSaving(true);
+    setError(null);
 
-  const toggleFocusTopic = (topic: string) => {
-    const focusTopics = preferences.focusTopics.includes(topic)
-      ? preferences.focusTopics.filter((item) => item !== topic)
-      : [...preferences.focusTopics, topic];
-
-    updatePreferences({ focusTopics });
+    try {
+      const savedPreferences = await saveProfilePreferences(nextPreferences);
+      setPreferences(savedPreferences);
+    } catch (saveError) {
+      setPreferences(preferences);
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Could not save profile preferences.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!isReady) {
@@ -61,6 +83,8 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      {error ? <p className="text-sm text-red-500">{error}</p> : null}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Profile information</CardTitle>
@@ -76,21 +100,23 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Focus topic preferences</CardTitle>
+          <CardTitle className="text-base">Focus topic preference</CardTitle>
           <CardDescription>
-            Choose the areas you want your pet and daily tasks to focus on.
+            Choose the one area you want your pet and daily tasks to focus on.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2">
           {focusTopicOptions.map((topic) => (
-            <div key={topic} className="flex items-center gap-3 rounded-lg border p-3">
-              <Checkbox
-                id={`focus-${topic}`}
-                checked={preferences.focusTopics.includes(topic)}
-                onCheckedChange={() => toggleFocusTopic(topic)}
-              />
-              <Label htmlFor={`focus-${topic}`}>{topic}</Label>
-            </div>
+            <Button
+              key={topic}
+              type="button"
+              variant={preferences.focusTopic === topic ? "default" : "outline"}
+              className="w-full justify-start"
+              disabled={isSaving}
+              onClick={() => void updatePreferences({ focusTopic: topic })}
+            >
+              {topic}
+            </Button>
           ))}
         </CardContent>
       </Card>
@@ -106,8 +132,9 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
               key={vibe}
               type="button"
               size="sm"
+              disabled={isSaving}
               variant={preferences.avatarVibe === vibe ? "default" : "outline"}
-              onClick={() => updatePreferences({ avatarVibe: vibe })}
+              onClick={() => void updatePreferences({ avatarVibe: vibe })}
             >
               {vibe}
             </Button>
@@ -127,9 +154,10 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
             <Label htmlFor="daily-reminder">Daily reminder</Label>
             <Checkbox
               id="daily-reminder"
+              disabled={isSaving}
               checked={preferences.dailyReminderEnabled}
               onCheckedChange={(checked) =>
-                updatePreferences({ dailyReminderEnabled: checked === true })
+                void updatePreferences({ dailyReminderEnabled: checked === true })
               }
             />
           </div>
@@ -138,10 +166,10 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
             <Input
               id="reminder-time"
               type="time"
+              disabled={isSaving || !preferences.dailyReminderEnabled}
               value={preferences.dailyReminderTime}
-              disabled={!preferences.dailyReminderEnabled}
               onChange={(event) =>
-                updatePreferences({ dailyReminderTime: event.target.value })
+                void updatePreferences({ dailyReminderTime: event.target.value })
               }
             />
           </div>

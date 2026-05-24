@@ -47,7 +47,7 @@ function getCatalogTaskReason(
 }
 
 export async function getDailyTasks(): Promise<DailyTask[]> {
-  const preferences = getProfilePreferences();
+  const preferences = await getProfilePreferences();
   const quizAnswers = await getQuizAnswersForToday();
 
   const selectedCatalogIds = habitCatalog

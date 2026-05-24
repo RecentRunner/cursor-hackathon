@@ -13,21 +13,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
+import {
+  avatarVibeOptions,
+  focusTopicOptions,
+  saveOnboardingPreferences,
+} from "@/lib/profile-preferences-storage";
 import { routes } from "@/lib/routes";
 
 const questions = [
   {
     id: "focus",
     prompt: "What habit do you most want to build first?",
-    options: ["Sleep", "Movement", "Hydration", "Mindfulness"],
+    options: focusTopicOptions,
   },
   {
-    id: "pet-name",
+    id: "avatarVibe",
     prompt: "Pick a starter vibe for your pet.",
-    options: ["Calm", "Energetic", "Curious", "Cozy"],
+    options: avatarVibeOptions,
   },
-];
+] as const;
 
 export default function OnboardingQuizPage() {
   const router = useRouter();
@@ -60,18 +64,7 @@ export default function OnboardingQuizPage() {
     setError(null);
 
     try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: {
-          onboarding_completed: true,
-          onboarding_answers: answers,
-        },
-      });
-
-      if (updateError) {
-        throw updateError;
-      }
-
+      await saveOnboardingPreferences(answers.focus, answers.avatarVibe);
       router.push(routes.avatar);
       router.refresh();
     } catch (submitError) {

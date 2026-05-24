@@ -72,9 +72,7 @@ export function matchesFocusTopics(
   entry: HabitCatalogEntry,
   preferences: ProfilePreferences,
 ) {
-  return entry.focusTopics.some((topic) =>
-    preferences.focusTopics.includes(topic),
-  );
+  return entry.focusTopics.includes(preferences.focusTopic);
 }
 
 export function matchesQuizAnswers(
