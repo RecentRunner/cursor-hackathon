@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+
+import { GlobalBottomNav } from "@/components/layout/global-bottom-nav";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -10,7 +12,7 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Habit Pet",
-  description: "Hackathon bootstrap for a Next.js and Supabase habit pet app.",
+  description: "Build habits, care for your pixel pet, and track wellness every day.",
 };
 
 const geistSans = Geist({
@@ -33,7 +35,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <div className="min-h-svh pb-24">{children}</div>
+          <GlobalBottomNav />
         </ThemeProvider>
       </body>
     </html>
