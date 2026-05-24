@@ -5,13 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { TintedSpriteIcon } from "@/components/character/tinted-sprite-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast-provider";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import { DEFAULT_GRAY_COLOR } from "@/lib/character/presets";
@@ -27,6 +21,7 @@ import {
   type ShopItemRecord,
   type ShopLayerId,
 } from "@/lib/shop-catalog";
+import { cn } from "@/lib/utils";
 
 const SHOP_LAYER_ORDER: ShopLayerId[] = [
   "head",
@@ -55,50 +50,59 @@ function ShopItemCard({
 }) {
   const room = item.type === "room" ? getRoomBackground(item.id) : null;
 
+  const actionLabel = (() => {
+    if (isPending) {
+      return owned ? "Updating..." : "Processing...";
+    }
+
+    if (owned) {
+      return equipped ? "Equipped" : "Equip";
+    }
+
+    if (!canAfford) {
+      return "Need more points";
+    }
+
+    return "Buy";
+  })();
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-14 items-center justify-center border-2 border-border bg-zinc-950/80 p-1.5">
-              {room ? (
-                <div className={`size-full ${room.previewClassName}`} />
-              ) : (
-                <TintedSpriteIcon
-                  src={item.image_path}
-                  color={DEFAULT_GRAY_COLOR.hsl}
-                  size={36}
-                />
-              )}
-            </div>
-            <div>
-              <CardTitle className="text-xs">{item.name}</CardTitle>
-              <CardDescription className="text-[9px]">{item.id}</CardDescription>
-            </div>
+    <Card className="flex h-full flex-col overflow-hidden">
+      <CardContent className="flex h-full flex-col gap-3 p-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex size-12 shrink-0 items-center justify-center border-2 border-border bg-zinc-950/80 p-1">
+            {room ? (
+              <div className={cn("size-full", room.previewClassName)} />
+            ) : (
+              <TintedSpriteIcon
+                src={item.image_path}
+                color={DEFAULT_GRAY_COLOR.hsl}
+                size={32}
+              />
+            )}
           </div>
-          <Badge>{item.price} pts</Badge>
+
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex items-start justify-between gap-2">
+              <p className="min-w-0 flex-1 text-xs leading-snug">{item.name}</p>
+              <Badge className="shrink-0 px-1.5 py-0.5 text-[8px]">
+                {item.price} pts
+              </Badge>
+            </div>
+            <p className="truncate text-[9px] text-muted-foreground">{item.id}</p>
+          </div>
         </div>
-      </CardHeader>
-      <CardContent className="grid gap-2">
-        {!owned ? (
-          <Button
-            className="w-full"
-            variant="outline"
-            disabled={!canAfford || isPending}
-            onClick={onPurchase}
-          >
-            {isPending ? "Processing..." : canAfford ? "Buy" : "Not enough points"}
-          </Button>
-        ) : (
-          <Button
-            className="w-full"
-            variant={equipped ? "default" : "outline"}
-            disabled={isPending || (item.type === "room" && equipped)}
-            onClick={onEquipToggle}
-          >
-            {isPending ? "Updating..." : equipped ? "Equipped" : "Equip"}
-          </Button>
-        )}
+
+        <Button
+          className="mt-auto h-auto min-h-9 w-full whitespace-normal px-2 py-2 text-center text-[10px] leading-snug"
+          variant={owned && equipped ? "default" : "outline"}
+          disabled={
+            isPending || (!owned && !canAfford) || (owned && item.type === "room" && equipped)
+          }
+          onClick={owned ? onEquipToggle : onPurchase}
+        >
+          {actionLabel}
+        </Button>
       </CardContent>
     </Card>
   );
@@ -198,13 +202,16 @@ export function ShopContent() {
 
   const roomItems = items.filter((item) => item.type === "room");
 
+  const itemGridClassName =
+    "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3";
+
   return (
     <>
-      <div className="mb-4 flex items-center justify-between border-2 border-border bg-muted/40 px-4 py-3 shadow-[var(--retro-shadow-sm)]">
+      <div className="mb-5 flex items-center justify-between gap-3 border-2 border-border bg-muted/40 px-4 py-3 shadow-[var(--retro-shadow-sm)]">
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Your balance
         </span>
-        <Badge variant="secondary">
+        <Badge variant="secondary" className="shrink-0">
           {coins === null ? "..." : `${coins} points`}
         </Badge>
       </div>
@@ -213,7 +220,7 @@ export function ShopContent() {
 
       {!error && coins !== null && items.length === 0 ? (
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">
               Nothing in the shop right now. Keep completing habits and daily
               check-ins to earn points for when new styles arrive.
@@ -222,13 +229,13 @@ export function ShopContent() {
         </Card>
       ) : null}
 
-      <div className="grid gap-6">
+      <div className="grid gap-8">
         {roomItems.length > 0 ? (
           <section className="grid gap-3">
             <h3 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Room backgrounds
             </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className={itemGridClassName}>
               {roomItems.map((item) => (
                 <ShopItemCard
                   key={item.id}
@@ -250,7 +257,7 @@ export function ShopContent() {
             <h3 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               {group.label}
             </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className={itemGridClassName}>
               {group.items.map((item) => (
                 <ShopItemCard
                   key={item.id}
