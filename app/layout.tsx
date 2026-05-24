@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Press_Start_2P, Share_Tech_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
+import { GlobalAmbientAudio } from "@/components/layout/global-ambient-audio";
 import { GlobalBottomNav } from "@/components/layout/global-bottom-nav";
 import { SiteHeader } from "@/components/layout/site-header";
 import { ToastProvider } from "@/components/ui/toast-provider";
@@ -55,6 +56,7 @@ export default function RootLayout({
           <ToastProvider>
             <SiteHeader />
             <div className="flex min-h-dvh flex-col pt-topbar">{children}</div>
+            <GlobalAmbientAudio />
             <GlobalBottomNav />
           </ToastProvider>
         </ThemeProvider>
