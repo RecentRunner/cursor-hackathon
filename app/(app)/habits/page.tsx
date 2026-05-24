@@ -1,13 +1,7 @@
-import { HabitTracker } from "@/components/habits/habit-tracker";
-import { AppShell } from "@/components/layout/app-shell";
+import { redirect } from "next/navigation";
+
+import { routes } from "@/lib/routes";
 
 export default function HabitsPage() {
-  return (
-    <AppShell
-      title="Habits"
-      description="Complete today's tasks and manage your habit list."
-    >
-      <HabitTracker mode="all" />
-    </AppShell>
-  );
+  redirect(`${routes.avatar}#bit-daily-tasks`);
 }

@@ -1,13 +1,7 @@
-import { DailyQuizForm } from "@/components/daily-quiz/daily-quiz-form";
-import { AppShell } from "@/components/layout/app-shell";
+import { redirect } from "next/navigation";
+
+import { routes } from "@/lib/routes";
 
 export default function DailyQuizPage() {
-  return (
-    <AppShell
-      title="Daily quiz"
-      description="Complete your once-per-day wellness sliders and journal."
-    >
-      <DailyQuizForm />
-    </AppShell>
-  );
+  redirect(`${routes.avatar}#bit-daily-quiz`);
 }

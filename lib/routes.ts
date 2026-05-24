@@ -18,8 +18,6 @@ export type AppRoute = (typeof routes)[keyof typeof routes];
 export const appNavItems = [
   { href: routes.avatar, label: "Bit", shortLabel: "Bit" },
   { href: routes.customize, label: "Customize", shortLabel: "Style" },
-  { href: routes.habits, label: "Habits", shortLabel: "Habits" },
-  { href: routes.dailyQuiz, label: "Daily Quiz", shortLabel: "Quiz" },
   { href: routes.shop, label: "Shop", shortLabel: "Shop" },
   { href: routes.profile, label: "Profile", shortLabel: "Profile" },
 ] as const;

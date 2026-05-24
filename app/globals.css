@@ -147,6 +147,15 @@
     @apply flex min-h-0 w-full flex-1 flex-col items-center justify-center;
   }
 
+  /* Bit home: same pet stage height as fillViewport layout (header + main padding accounted for). */
+  .bit-home-pet-stage {
+    @apply pet-viewport-stage flex w-full flex-col items-center justify-center;
+    min-height: calc(
+      100dvh - var(--app-topbar-height) - var(--app-nav-offset) -
+        env(safe-area-inset-top, 0px) - 11rem
+    );
+  }
+
   .tamagotchi-shell-fill {
     @apply flex min-h-0 w-full max-w-4xl flex-1 flex-col;
   }

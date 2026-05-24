@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { DailyQuizForm } from "@/components/daily-quiz/daily-quiz-form";
+import { HabitTracker } from "@/components/habits/habit-tracker";
 import { PetHabitat } from "@/components/pet/pet-habitat";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import {
@@ -45,5 +47,20 @@ export function AvatarPageContent() {
     );
   }
 
-  return <PetHabitat customization={customization} fillViewport />;
+  return (
+    <div className="flex w-full flex-col">
+      <div className="bit-home-pet-stage">
+        <PetHabitat customization={customization} fillViewport />
+      </div>
+
+      <section className="grid w-full gap-6 pt-6 lg:grid-cols-2 lg:items-start">
+        <div id="bit-daily-tasks">
+          <HabitTracker mode="daily" />
+        </div>
+        <div id="bit-daily-quiz">
+          <DailyQuizForm />
+        </div>
+      </section>
+    </div>
+  );
 }

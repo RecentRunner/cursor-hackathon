@@ -30,7 +30,7 @@ export function DailyQuizLinkButton() {
 
   return (
     <Button asChild className="w-full" variant="outline">
-      <Link href={routes.dailyQuiz}>Open daily quiz</Link>
+      <Link href={`${routes.avatar}#bit-daily-quiz`}>Open daily quiz</Link>
     </Button>
   );
 }

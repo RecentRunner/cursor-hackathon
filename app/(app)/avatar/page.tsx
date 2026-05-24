@@ -8,8 +8,7 @@ export default function AvatarPage() {
     <AppShell
       title="Your bit"
       description="Watch your digital self roam, breathe, and react to how you care for yourself."
-      fillViewport
-      centered
+      wide
     >
       <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
         <AvatarPageContent />

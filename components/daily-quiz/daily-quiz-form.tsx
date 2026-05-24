@@ -1,7 +1,6 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { WellnessSlider } from "@/components/daily-quiz/wellness-slider";
@@ -32,7 +31,6 @@ import {
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import { saveDailyEntry } from "@/lib/daily-quiz-storage";
 import { JOURNAL_MAX_LENGTH } from "@/lib/journal-safety";
-import { routes } from "@/lib/routes";
 
 export function DailyQuizForm() {
   const cachedQuiz = getCachedQuizTabData();
@@ -161,14 +159,7 @@ export function DailyQuizForm() {
               </p>
               <p className="text-sm text-muted-foreground">
                 Your answers are saved below. Come back tomorrow for your next
-                check-in. How you did today affects your bit. Spend time with{" "}
-                <Link
-                  href={routes.avatar}
-                  className="font-medium text-primary underline-offset-2 hover:underline"
-                >
-                  your bit
-                </Link>{" "}
-                whenever you want to see how they are doing.
+                check-in. How you did today affects your bit.
               </p>
               <DailyQuizCountdown
                 onAvailable={() => {

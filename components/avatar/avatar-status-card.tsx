@@ -108,7 +108,7 @@ export function AvatarStatusCard({ customization }: AvatarStatusCardProps) {
         </p>
         {!hasCheckedInToday ? (
           <Button asChild className="w-full">
-            <Link href={routes.dailyQuiz}>Take today&apos;s quiz</Link>
+            <Link href={`${routes.avatar}#bit-daily-quiz`}>Take today&apos;s quiz</Link>
           </Button>
         ) : null}
       </CardContent>

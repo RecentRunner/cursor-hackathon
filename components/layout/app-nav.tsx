@@ -3,14 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { forwardRef } from "react";
-import {
-  Home,
-  ListPlus,
-  Palette,
-  ShoppingBag,
-  Sparkles,
-  UserRound,
-} from "lucide-react";
+import { Home, Palette, ShoppingBag, UserRound } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { appNavItems, routes, type NavItem } from "@/lib/routes";
@@ -31,17 +24,13 @@ const gridColsClass = {
 const navIcons = {
   [routes.avatar]: Home,
   [routes.customize]: Palette,
-  [routes.habits]: ListPlus,
-  [routes.dailyQuiz]: Sparkles,
   [routes.shop]: ShoppingBag,
   [routes.profile]: UserRound,
 } as const;
 
 const prefetchByRoute: Partial<Record<string, () => void>> = {
-  [routes.habits]: () => {
+  [routes.avatar]: () => {
     void prefetchHabitsTabData();
-  },
-  [routes.dailyQuiz]: () => {
     void prefetchQuizTabData();
   },
 };
