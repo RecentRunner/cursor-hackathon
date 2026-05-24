@@ -61,6 +61,7 @@ export function HabitBrand({
             "font-pixel select-none uppercase tracking-widest text-primary",
             size === "hero" ? "text-base sm:text-lg" : "text-[10px]",
           )}
+          aria-hidden="true"
         >
           HaBit
         </span>
