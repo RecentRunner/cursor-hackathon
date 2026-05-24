@@ -93,7 +93,7 @@ export const AppNav = forwardRef<HTMLElement, AppNavProps>(function AppNav(
               onPointerEnter={() => prefetchByRoute[item.href]?.()}
               onFocus={() => prefetchByRoute[item.href]?.()}
               className={cn(
-                "bottom-nav-item flex flex-col items-center justify-center gap-1.5 overflow-hidden border-2 px-1 py-2 text-[9px] leading-none transition-colors duration-75",
+                "bottom-nav-item flex flex-col items-center justify-center gap-1.5 overflow-hidden border-2 px-1 py-2 font-pixel text-[8px] leading-none transition-colors duration-75",
                 isActive
                   ? "border-secondary bg-primary text-primary-foreground shadow-[var(--retro-shadow-sm)]"
                   : "border-transparent text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",

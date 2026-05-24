@@ -28,7 +28,7 @@ export function AuthBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[9px] font-medium leading-tight transition-colors",
+                "flex flex-col items-center gap-1 rounded-lg px-1 py-2 font-pixel text-[8px] font-normal leading-tight transition-colors",
                 isActive
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",

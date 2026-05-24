@@ -19,7 +19,7 @@
     --secondary: 198 100% 45%;
     --secondary-foreground: 252 38% 10%;
     --muted: 252 24% 20%;
-    --muted-foreground: 52 40% 68%;
+    --muted-foreground: 52 35% 74%;
     --accent: 142 70% 45%;
     --accent-foreground: 252 38% 10%;
     --destructive: 0 84% 58%;
@@ -51,7 +51,7 @@
     --secondary: 198 100% 45%;
     --secondary-foreground: 252 38% 10%;
     --muted: 252 24% 20%;
-    --muted-foreground: 52 40% 68%;
+    --muted-foreground: 52 35% 74%;
     --accent: 142 70% 45%;
     --accent-foreground: 252 38% 10%;
     --destructive: 0 84% 58%;
@@ -73,9 +73,16 @@
   }
 
   body {
-    @apply overflow-x-hidden bg-background text-foreground text-xs leading-relaxed;
-    font-family: var(--font-pixel), monospace;
-    image-rendering: pixelated;
+    @apply overflow-x-hidden bg-background text-foreground text-sm leading-relaxed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-pixel leading-snug;
   }
 }
 

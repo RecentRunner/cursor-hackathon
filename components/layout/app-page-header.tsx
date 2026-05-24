@@ -16,9 +16,9 @@ export function AppPageHeader({
           {eyebrow}
         </p>
       ) : null}
-      <h1 className="text-sm">{title}</h1>
+      <h1 className="text-base">{title}</h1>
       {description ? (
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           {description}
         </p>
       ) : null}

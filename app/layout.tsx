@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Press_Start_2P } from "next/font/google";
+import { Press_Start_2P, Share_Tech_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
 import { GlobalBottomNav } from "@/components/layout/global-bottom-nav";
@@ -30,6 +30,13 @@ const pixelFont = Press_Start_2P({
   display: "swap",
 });
 
+const bodyFont = Share_Tech_Mono({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,7 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${pixelFont.variable} font-sans`}>
+      <body className={`${pixelFont.variable} ${bodyFont.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

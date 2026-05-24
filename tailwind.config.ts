@@ -60,7 +60,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-pixel)", "monospace"],
+        sans: ["var(--font-body)", "monospace"],
         pixel: ["var(--font-pixel)", "monospace"],
       },
       spacing: {

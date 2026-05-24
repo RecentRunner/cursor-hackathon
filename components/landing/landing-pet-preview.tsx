@@ -9,6 +9,7 @@ import {
   getAvatarCustomization,
   type AvatarCustomization,
 } from "@/lib/avatar-customization-storage";
+import { getGuestLandingPetCustomization } from "@/lib/landing-random-pet";
 import { routes } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -76,7 +77,7 @@ export function LandingPetPreview() {
 
     if (!user) {
       setIsSignedIn(false);
-      setCustomization(defaultAvatarCustomization);
+      setCustomization(getGuestLandingPetCustomization());
       setIsLoading(false);
       return;
     }
