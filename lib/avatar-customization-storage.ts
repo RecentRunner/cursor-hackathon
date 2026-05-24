@@ -1,3 +1,4 @@
+import { DEFAULT_STARTING_COINS } from "@/lib/coins";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
 import {
   hexToHsl,
@@ -204,6 +205,7 @@ export async function getAvatarCustomization(): Promise<AvatarCustomization> {
   if (!data) {
     const { error: insertError } = await supabase.from("avatar_state").insert({
       user_id: userId,
+      coins: DEFAULT_STARTING_COINS,
       avatar_name: DEFAULT_AVATAR_NAME,
       skin_color: DEFAULT_HEX,
       pants_style: NONE_VARIANT_ID,

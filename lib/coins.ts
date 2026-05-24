@@ -1,3 +1,5 @@
+export const DEFAULT_STARTING_COINS = 100;
+
 export const COINS_PER_TASK_COMPLETE = 50;
 export const COINS_PER_TASK_UNCHECK = -50;
 

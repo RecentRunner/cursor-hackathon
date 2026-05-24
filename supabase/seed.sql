@@ -24,15 +24,15 @@ where id in (
 
 insert into public.shop_items (id, name, type, price, image_path)
 values
-  ('pants-3', 'Pants 3', 'pants', 30, '/character/pants/pants-3.png'),
-  ('shoes-3', 'Shoes 3', 'shoes', 30, '/character/shoes/shoes-3.png'),
-  ('torso-3', 'Torso 3', 'torso', 35, '/character/torso/torso-3.png'),
-  ('torso-4', 'Torso 4', 'torso', 40, '/character/torso/torso-4.png'),
-  ('head-3', 'Head 3', 'head', 40, '/character/head/head-3.png'),
-  ('head-4', 'Head 4', 'head', 45, '/character/head/head-4.png'),
-  ('head-5', 'Head 5', 'head', 50, '/character/head/head-5.png'),
-  ('head-6', 'Head 6', 'head', 55, '/character/head/head-6.png'),
-  ('head-7', 'Head 7', 'head', 60, '/character/head/head-7.png'),
+  ('pants-3', 'Utility Cargo Pants', 'pants', 30, '/character/pants/pants-3.png'),
+  ('shoes-3', 'Neon Glow Runners', 'shoes', 30, '/character/shoes/shoes-3.png'),
+  ('torso-3', 'Cropped Tank Top', 'torso', 35, '/character/torso/torso-3.png'),
+  ('torso-4', 'Crimson Plate Armor', 'torso', 40, '/character/torso/torso-4.png'),
+  ('head-3', 'Retro Snapback Cap', 'head', 40, '/character/head/head-3.png'),
+  ('head-4', 'Fiery Side Mohawk', 'head', 45, '/character/head/head-4.png'),
+  ('head-5', 'Crested Warrior Helm', 'head', 50, '/character/head/head-5.png'),
+  ('head-6', 'Flowing Side Locks', 'head', 55, '/character/head/head-6.png'),
+  ('head-7', 'Messy Shag Cut', 'head', 60, '/character/head/head-7.png'),
   ('room-night', 'Starlit Night', 'room', 40, '/shop/room-night.svg'),
   ('room-forest', 'Mystic Forest', 'room', 50, '/shop/room-forest.svg')
 on conflict (id) do update

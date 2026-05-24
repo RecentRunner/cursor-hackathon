@@ -1,25 +1,35 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
+import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 const HABIT_LOGO_SRC = "/habit-logo.png";
 
 type HabitBrandProps = {
   className?: string;
+  href?: string;
+  "aria-current"?: "page" | undefined;
 };
 
-export function HabitBrand({ className }: HabitBrandProps) {
+export function HabitBrand({
+  className,
+  href = routes.avatar,
+  "aria-current": ariaCurrent,
+}: HabitBrandProps) {
   const [useText, setUseText] = useState(false);
 
   return (
-    <div
+    <Link
+      href={href}
+      aria-label="Go to home"
+      aria-current={ariaCurrent}
       className={cn(
-        "flex shrink-0 items-center justify-center border-2 border-border bg-card/80 px-3 py-1.5 shadow-[var(--retro-shadow-sm)]",
+        "group flex shrink-0 items-center justify-center border-2 border-border bg-card/80 px-3 py-1.5 shadow-[var(--retro-shadow-sm)] transition-transform hover:-translate-y-0.5 hover:border-primary/60",
         className,
       )}
-      aria-label="HaBit"
     >
       {!useText ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -37,6 +47,6 @@ export function HabitBrand({ className }: HabitBrandProps) {
           HaBit
         </span>
       )}
-    </div>
+    </Link>
   );
 }

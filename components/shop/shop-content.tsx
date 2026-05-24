@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import { getAvatarCustomization } from "@/lib/avatar-customization-storage";
 import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
+import { defaultAvatarCustomization } from "@/lib/avatar-customization-storage";
 import { DEFAULT_GRAY_COLOR } from "@/lib/character/presets";
 import { getRoomBackground, normalizeRoomBackgroundId } from "@/lib/room-backgrounds";
 import {
@@ -145,26 +146,24 @@ export function ShopContent() {
   const [error, setError] = useState<string | null>(null);
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
   const [baseCustomization, setBaseCustomization] =
-    useState<AvatarCustomization | null>(null);
+    useState<AvatarCustomization>(defaultAvatarCustomization);
   const [previewItem, setPreviewItem] = useState<ShopItemRecord | null>(null);
 
   const refreshShop = useCallback(async () => {
+    setError(null);
+
+    let nextEquippedItems: string[] = [];
+    let nextEquippedRoomBackground = "room-day";
+
     try {
-      setError(null);
-      const [inventory, customization] = await Promise.all([
-        getShopInventory(),
-        getAvatarCustomization(),
-      ]);
+      const inventory = await getShopInventory();
       setItems(inventory.items);
       setOwnedItemIds(inventory.ownedItemIds);
       setEquippedItems(inventory.equippedItems);
       setEquippedRoomBackground(inventory.equippedRoomBackground);
       setCoins(inventory.coins);
-      setBaseCustomization({
-        ...customization,
-        equippedItems: inventory.equippedItems,
-        roomBackground: normalizeRoomBackgroundId(inventory.equippedRoomBackground),
-      });
+      nextEquippedItems = inventory.equippedItems;
+      nextEquippedRoomBackground = inventory.equippedRoomBackground;
     } catch (refreshError) {
       setError(
         refreshError instanceof Error
@@ -172,6 +171,21 @@ export function ShopContent() {
           : "Could not load the shop.",
       );
       setCoins(0);
+    }
+
+    try {
+      const customization = await getAvatarCustomization();
+      setBaseCustomization({
+        ...customization,
+        equippedItems: nextEquippedItems,
+        roomBackground: normalizeRoomBackgroundId(nextEquippedRoomBackground),
+      });
+    } catch {
+      setBaseCustomization((current) => ({
+        ...current,
+        equippedItems: nextEquippedItems,
+        roomBackground: normalizeRoomBackgroundId(nextEquippedRoomBackground),
+      }));
     }
   }, []);
 
@@ -242,12 +256,39 @@ export function ShopContent() {
 
   const itemGridClassName = "grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3";
 
+  const previewOwned = previewItem
+    ? ownedItemIds.includes(previewItem.id)
+    : false;
+  const previewEquipped = previewItem
+    ? previewItem.type === "room"
+      ? equippedRoomBackground === previewItem.id
+      : equippedItems.includes(previewItem.id)
+    : false;
+  const previewCanAfford = previewItem
+    ? coins !== null && coins >= previewItem.price
+    : false;
+
   return (
     <>
       <ShopItemPreviewModal
         item={previewItem}
         baseCustomization={baseCustomization}
+        coins={coins}
+        owned={previewOwned}
+        equipped={previewEquipped}
+        canAfford={previewCanAfford}
+        isPending={previewItem !== null && pendingItemId === previewItem.id}
         onClose={() => setPreviewItem(null)}
+        onPurchase={() => {
+          if (previewItem) {
+            void handlePurchase(previewItem.id);
+          }
+        }}
+        onEquipToggle={() => {
+          if (previewItem) {
+            void handleEquipToggle(previewItem);
+          }
+        }}
       />
 
       <div className="mb-5 flex items-center justify-between gap-3 border-2 border-border bg-muted/40 px-4 py-3 shadow-[var(--retro-shadow-sm)]">

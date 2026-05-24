@@ -1,3 +1,4 @@
+import { DEFAULT_STARTING_COINS } from "@/lib/coins";
 import { createClient } from "@/lib/supabase/client";
 
 async function getAuthenticatedUserId() {
@@ -35,13 +36,13 @@ export async function getCoins(): Promise<number> {
   if (!data) {
     const { error: insertError } = await supabase
       .from("avatar_state")
-      .insert({ user_id: userId, coins: 0 });
+      .insert({ user_id: userId, coins: DEFAULT_STARTING_COINS });
 
     if (insertError) {
       throw new Error(insertError.message);
     }
 
-    return 0;
+    return DEFAULT_STARTING_COINS;
   }
 
   return data.coins ?? 0;

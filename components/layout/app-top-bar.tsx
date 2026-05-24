@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 
 import { HabitBrand } from "@/components/layout/habit-brand";
-import { HomeLogoLink } from "@/components/layout/home-logo-link";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
@@ -26,12 +25,8 @@ export function AppTopBar({ className }: AppTopBarProps) {
         paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
-      <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4">
-        <HomeLogoLink
-          className="mt-0"
-          aria-current={isHome ? "page" : undefined}
-        />
-        <HabitBrand />
+      <div className="mx-auto flex h-full max-w-6xl items-center px-4">
+        <HabitBrand aria-current={isHome ? "page" : undefined} />
       </div>
     </header>
   );

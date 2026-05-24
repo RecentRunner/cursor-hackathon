@@ -59,6 +59,33 @@ function presetFromHex(id: string, name: string, hex: string): ColorPreset {
   return presetFromHsl(id, name, rgbToHsl(rgb.r, rgb.g, rgb.b));
 }
 
+export const VARIANT_DISPLAY_NAMES: Record<string, string> = {
+  "skin-1": "Default Form",
+  "pants-1": "Slim Fit Jeans",
+  "pants-2": "Rolled Cuff Shorts",
+  "pants-3": "Utility Cargo Pants",
+  "shoes-1": "Canvas Sneakers",
+  "shoes-2": "Chunky High-Tops",
+  "shoes-3": "Neon Glow Runners",
+  "torso-1": "Crew Neck Tee",
+  "torso-2": "Zip-Up Hoodie",
+  "torso-3": "Cropped Tank Top",
+  "torso-4": "Crimson Plate Armor",
+  "eyes-1": "Round Gentle Eyes",
+  "eyes-2": "Starry Spark Eyes",
+  "head-1": "Spiked Mohawk",
+  "head-2": "Cozy Knit Beanie",
+  "head-3": "Retro Snapback Cap",
+  "head-4": "Fiery Side Mohawk",
+  "head-5": "Crested Warrior Helm",
+  "head-6": "Flowing Side Locks",
+  "head-7": "Messy Shag Cut",
+};
+
+export function getVariantDisplayName(variantId: string, fallbackLabel = variantId) {
+  return VARIANT_DISPLAY_NAMES[variantId] ?? fallbackLabel;
+}
+
 function layerVariants(
   layerId: Exclude<CharacterLayerId, "skin">,
   label: string,
@@ -66,9 +93,10 @@ function layerVariants(
 ): LayerVariant[] {
   return Array.from({ length: count }, (_, index) => {
     const number = index + 1;
+    const id = `${layerId}-${number}`;
     return {
-      id: `${layerId}-${number}`,
-      label: `${label} ${number}`,
+      id,
+      label: getVariantDisplayName(id, `${label} ${number}`),
       src: `/character/${layerId}/${layerId}-${number}.png`,
     };
   });
@@ -117,7 +145,11 @@ export const CHARACTER_LAYERS: CharacterLayer[] = [
     label: "Skin",
     allowVariants: false,
     variants: [
-      { id: "skin-1", label: "Skin 1", src: "/character/skin/skin-1.png" },
+      {
+        id: "skin-1",
+        label: getVariantDisplayName("skin-1", "Skin 1"),
+        src: "/character/skin/skin-1.png",
+      },
     ],
   },
   {

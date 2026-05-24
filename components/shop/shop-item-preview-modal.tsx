@@ -16,14 +16,28 @@ import {
 
 type ShopItemPreviewModalProps = {
   item: ShopItemRecord | null;
-  baseCustomization: AvatarCustomization | null;
+  baseCustomization: AvatarCustomization;
+  coins: number | null;
+  owned: boolean;
+  equipped: boolean;
+  canAfford: boolean;
+  isPending: boolean;
   onClose: () => void;
+  onPurchase: () => void;
+  onEquipToggle: () => void;
 };
 
 export function ShopItemPreviewModal({
   item,
   baseCustomization,
+  coins,
+  owned,
+  equipped,
+  canAfford,
+  isPending,
   onClose,
+  onPurchase,
+  onEquipToggle,
 }: ShopItemPreviewModalProps) {
   useEffect(() => {
     if (!item) {
@@ -42,7 +56,7 @@ export function ShopItemPreviewModal({
     };
   }, [item, onClose]);
 
-  if (!item || !baseCustomization) {
+  if (!item) {
     return null;
   }
 
@@ -104,8 +118,54 @@ export function ShopItemPreviewModal({
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-8 bg-gradient-to-t from-black/35 to-transparent" />
           </div>
           <p className="mt-3 text-center text-[10px] text-muted-foreground">
-            This preview does not equip or purchase the item.
+            Preview only — nothing is purchased or equipped until you confirm.
           </p>
+
+          <div className="mt-4 grid gap-2 border-t-2 border-border pt-4">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-muted-foreground">Price</span>
+              <span>{item.price} points</span>
+            </div>
+
+            {owned ? (
+              <Button
+                type="button"
+                className="w-full"
+                variant={equipped ? "default" : "outline"}
+                disabled={
+                  isPending || (item.type !== "room" && equipped)
+                }
+                onClick={onEquipToggle}
+              >
+                {isPending
+                  ? "Updating..."
+                  : equipped
+                    ? "Equipped"
+                    : "Equip"}
+              </Button>
+            ) : (
+              <>
+                {!canAfford && coins !== null ? (
+                  <p className="text-center text-[10px] text-muted-foreground">
+                    You need {item.price - coins} more points to buy this item.
+                    Keep completing habits to earn more.
+                  </p>
+                ) : null}
+                <Button
+                  type="button"
+                  className="w-full"
+                  disabled={isPending || !canAfford}
+                  onClick={onPurchase}
+                >
+                  {isPending
+                    ? "Processing..."
+                    : canAfford
+                      ? `Buy for ${item.price} points`
+                      : "Need more points"}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
