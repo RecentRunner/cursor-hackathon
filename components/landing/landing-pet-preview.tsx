@@ -29,15 +29,33 @@ function LandingPetPreviewSkeleton() {
   );
 }
 
-function computeLandingPetScale(lcdWidth: number): number {
-  return Math.min(7, Math.max(4, Math.round(lcdWidth / 36)));
+const SPRITE_HEIGHT = 32;
+const SPRITE_WIDTH = 16;
+/** Target rendered pet height as a fraction of LCD height */
+const TARGET_HEIGHT_RATIO = 0.42;
+/** Keep pet from spanning too much of the LCD width */
+const TARGET_WIDTH_RATIO = 0.2;
+
+function computeLandingPetScale(lcdWidth: number, lcdHeight: number): number {
+  if (lcdWidth <= 0 || lcdHeight <= 0) {
+    return 4;
+  }
+
+  const scaleFromHeight = Math.round(
+    (lcdHeight * TARGET_HEIGHT_RATIO) / SPRITE_HEIGHT,
+  );
+  const scaleFromWidth = Math.round(
+    (lcdWidth * TARGET_WIDTH_RATIO) / SPRITE_WIDTH,
+  );
+
+  return Math.min(5, Math.max(2, Math.min(scaleFromHeight, scaleFromWidth)));
 }
 
 export function LandingPetPreview() {
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [petScale, setPetScale] = useState(7);
+  const [petScale, setPetScale] = useState(4);
   const [customization, setCustomization] = useState<AvatarCustomization>(
     defaultAvatarCustomization,
   );
@@ -50,16 +68,17 @@ export function LandingPetPreview() {
       return;
     }
 
-    const updateScale = (width: number) => {
-      setPetScale(computeLandingPetScale(width));
+    const updateScale = (width: number, height: number) => {
+      setPetScale(computeLandingPetScale(width, height));
     };
 
-    updateScale(node.getBoundingClientRect().width);
+    const rect = node.getBoundingClientRect();
+    updateScale(rect.width, rect.height);
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        updateScale(entry.contentRect.width);
+        updateScale(entry.contentRect.width, entry.contentRect.height);
       }
     });
 

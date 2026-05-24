@@ -126,7 +126,12 @@
   /* Landing hero preview: cap LCD height on narrow viewports */
   .tamagotchi-lcd-landing {
     @apply aspect-[4/3] w-full shrink-0;
-    max-height: clamp(140px, 42vw, 280px);
+    max-height: clamp(120px, 36vw, 240px);
+  }
+
+  .tamagotchi-lcd-landing > div.absolute svg {
+    width: 1rem;
+    height: 1rem;
   }
 
   .pet-viewport-stage {
