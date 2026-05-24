@@ -116,6 +116,12 @@
     max-width: calc(32rem - 2.5rem - 2rem);
   }
 
+  /* Landing hero preview: cap LCD height on narrow viewports */
+  .tamagotchi-lcd-landing {
+    @apply aspect-[4/3] w-full shrink-0;
+    max-height: clamp(140px, 42vw, 280px);
+  }
+
   .pet-viewport-stage {
     @apply flex min-h-0 w-full flex-1 flex-col items-center justify-center;
   }

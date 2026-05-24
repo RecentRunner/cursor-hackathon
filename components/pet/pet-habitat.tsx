@@ -23,6 +23,9 @@ type PetHabitatProps = {
   className?: string;
   fillViewport?: boolean;
   showStyleLink?: boolean;
+  petScale?: number;
+  lcdClassName?: string;
+  lcdRef?: React.Ref<HTMLDivElement>;
 };
 
 const MOOD_LABELS = {
@@ -36,6 +39,9 @@ export function PetHabitat({
   className,
   fillViewport = false,
   showStyleLink = true,
+  petScale,
+  lcdClassName: lcdClassNameOverride,
+  lcdRef,
 }: PetHabitatProps) {
   const [condition, setCondition] = useState<AvatarCondition>(
     defaultAvatarCondition,
@@ -60,7 +66,9 @@ export function PetHabitat({
 
   const lcdClassName = cn(
     "tamagotchi-lcd relative",
-    fillViewport ? "tamagotchi-lcd-pet-fill" : "tamagotchi-lcd-pet-match",
+    fillViewport
+      ? "tamagotchi-lcd-pet-fill"
+      : (lcdClassNameOverride ?? "tamagotchi-lcd-pet-match"),
   );
 
   if (!isReady) {
@@ -82,9 +90,9 @@ export function PetHabitat({
         </p>
       </div>
 
-      <div className={lcdClassName}>
+      <div ref={lcdRef} className={lcdClassName}>
         <ParallaxRoomBackground roomId={roomId as RoomBackgroundId} />
-        <AnimatedPetSprite customization={customization} />
+        <AnimatedPetSprite customization={customization} petScale={petScale} />
         <div className="pointer-events-none absolute left-2 top-2 z-20 grid gap-1.5">
           <PixelGauge type="heart" value={condition.health} variant="overlay" />
           <PixelGauge type="energy" value={condition.energy} variant="overlay" />

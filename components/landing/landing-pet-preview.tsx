@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { PetHabitat } from "@/components/pet/pet-habitat";
 import {
@@ -23,17 +23,48 @@ function LandingPetPreviewSkeleton() {
         <div className="h-4 w-24 animate-pulse rounded bg-muted" />
         <div className="h-2 w-16 animate-pulse rounded bg-muted" />
       </div>
-      <div className="tamagotchi-lcd aspect-[4/3] w-full animate-pulse bg-muted/40" />
+      <div className="tamagotchi-lcd tamagotchi-lcd-landing animate-pulse bg-muted/40" />
     </div>
   );
 }
 
+function computeLandingPetScale(lcdWidth: number): number {
+  return Math.min(7, Math.max(4, Math.round(lcdWidth / 36)));
+}
+
 export function LandingPetPreview() {
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [petScale, setPetScale] = useState(7);
   const [customization, setCustomization] = useState<AvatarCustomization>(
     defaultAvatarCustomization,
   );
+
+  const lcdRef = useCallback((node: HTMLDivElement | null) => {
+    resizeObserverRef.current?.disconnect();
+    resizeObserverRef.current = null;
+
+    if (!node) {
+      return;
+    }
+
+    const updateScale = (width: number) => {
+      setPetScale(computeLandingPetScale(width));
+    };
+
+    updateScale(node.getBoundingClientRect().width);
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        updateScale(entry.contentRect.width);
+      }
+    });
+
+    observer.observe(node);
+    resizeObserverRef.current = observer;
+  }, []);
 
   const loadPreview = useCallback(async () => {
     setIsLoading(true);
@@ -65,6 +96,12 @@ export function LandingPetPreview() {
     void loadPreview();
   }, [loadPreview]);
 
+  useEffect(() => {
+    return () => {
+      resizeObserverRef.current?.disconnect();
+    };
+  }, []);
+
   if (isLoading) {
     return <LandingPetPreviewSkeleton />;
   }
@@ -74,6 +111,9 @@ export function LandingPetPreview() {
       customization={customization}
       className="w-full max-w-sm"
       showStyleLink={false}
+      petScale={petScale}
+      lcdClassName="tamagotchi-lcd-landing"
+      lcdRef={lcdRef}
     />
   );
 

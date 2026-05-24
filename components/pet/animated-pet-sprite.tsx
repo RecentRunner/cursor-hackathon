@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 type AnimatedPetSpriteProps = {
   customization: AvatarCustomization;
   className?: string;
+  petScale?: number;
 };
 
 type WanderPosition = {
@@ -52,6 +53,7 @@ function randomPosition(current?: WanderPosition): WanderPosition {
 export function AnimatedPetSprite({
   customization,
   className,
+  petScale = 7,
 }: AnimatedPetSpriteProps) {
   const [position, setPosition] = useState<WanderPosition>({
     x: PET_WANDER_START.x,
@@ -98,7 +100,7 @@ export function AnimatedPetSprite({
             colors={customization.colors}
             variants={customization.variants}
             equippedItems={customization.equippedItems}
-            scale={7}
+            scale={petScale}
             compact
             className="!h-auto max-h-none"
           />
