@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { PixelAvatar } from "@/components/avatar/pixel-avatar";
+import { LandingPetPreview } from "@/components/landing/landing-pet-preview";
 import { LandingHeroActions } from "@/components/layout/landing-hero-actions";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-header";
 import {
@@ -37,7 +37,7 @@ export default function Home() {
 
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center gap-6 pt-8">
-              <PixelAvatar mood="happy" />
+              <LandingPetPreview />
               <div className="space-y-2 text-center">
                 <p className="text-sm font-medium">Your daily loop</p>
                 <p className="text-sm text-muted-foreground">

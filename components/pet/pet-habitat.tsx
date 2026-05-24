@@ -22,6 +22,7 @@ type PetHabitatProps = {
   customization: AvatarCustomization;
   className?: string;
   fillViewport?: boolean;
+  showStyleLink?: boolean;
 };
 
 const MOOD_LABELS = {
@@ -34,6 +35,7 @@ export function PetHabitat({
   customization,
   className,
   fillViewport = false,
+  showStyleLink = true,
 }: PetHabitatProps) {
   const [condition, setCondition] = useState<AvatarCondition>(
     defaultAvatarCondition,
@@ -87,9 +89,11 @@ export function PetHabitat({
           <PixelGauge type="heart" value={condition.health} variant="overlay" />
           <PixelGauge type="energy" value={condition.energy} variant="overlay" />
         </div>
-        <div className="absolute right-2 top-2 z-20">
-          <PetStyleLink />
-        </div>
+        {showStyleLink ? (
+          <div className="absolute right-2 top-2 z-20">
+            <PetStyleLink />
+          </div>
+        ) : null}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-8 bg-gradient-to-t from-black/35 to-transparent" />
       </div>
     </div>
