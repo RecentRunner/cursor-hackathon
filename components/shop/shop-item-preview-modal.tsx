@@ -7,12 +7,11 @@ import { CharacterLayerPreview } from "@/components/character/character-layer-pr
 import { ParallaxRoomBackground } from "@/components/pet/parallax-room-background";
 import { Button } from "@/components/ui/button";
 import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
-import { buildShopItemPreviewCustomization } from "@/lib/shop-preview";
-import type { ShopItemRecord } from "@/lib/shop-catalog";
 import {
-  normalizeRoomBackgroundId,
-  type RoomBackgroundId,
-} from "@/lib/room-backgrounds";
+  buildShopItemPreviewCustomization,
+  getShopPreviewRoomId,
+} from "@/lib/shop-preview";
+import type { ShopItemRecord } from "@/lib/shop-catalog";
 
 type ShopItemPreviewModalProps = {
   item: ShopItemRecord | null;
@@ -64,9 +63,7 @@ export function ShopItemPreviewModal({
     baseCustomization,
     item,
   );
-  const roomId = normalizeRoomBackgroundId(
-    previewCustomization.roomBackground,
-  ) as RoomBackgroundId;
+  const roomId = getShopPreviewRoomId(item, baseCustomization);
 
   return (
     <div

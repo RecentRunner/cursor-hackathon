@@ -47,7 +47,10 @@ export function ParallaxRoomBackground({
   }, [interactive]);
 
   return (
-    <div ref={containerRef} className={cn("absolute inset-0 overflow-hidden", className)}>
+    <div
+      ref={containerRef}
+      className={cn("absolute inset-0 z-0 overflow-hidden", className)}
+    >
       {room.layers.map((layer, index) => (
         <div
           key={layer.id}
