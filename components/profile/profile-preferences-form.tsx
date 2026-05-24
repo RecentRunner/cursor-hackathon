@@ -369,7 +369,7 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            In-app reminders appear inside Habit Pet while a tab is open.
+            In-app reminders appear inside HaBit Pet while a tab is open.
             Browser (OS) reminders use the Web Notifications API and may appear
             in your system notification center. Reminders fire once per day at
             your chosen local time.

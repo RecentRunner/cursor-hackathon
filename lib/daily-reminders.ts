@@ -174,7 +174,7 @@ export function showTestSystemDailyReminderNotification(
   }
 
   const { body, targetUrl } = buildDailyReminderNotification(status);
-  const notification = new Notification("Test: Habit Pet reminder", {
+  const notification = new Notification("Test: HaBit Pet reminder", {
     body: `This is a browser test notification. ${body}`,
     tag: `habit-pet-daily-reminder-test-${Date.now()}`,
   });

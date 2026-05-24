@@ -41,7 +41,7 @@ export function HabitBrand({
         />
       ) : (
         <span
-          className="font-pixel select-none text-[10px] uppercase tracking-widest text-primary"
+          className="font-pixel select-none text-[10px] tracking-wide text-primary"
           aria-hidden="true"
         >
           HaBit

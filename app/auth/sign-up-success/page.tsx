@@ -22,7 +22,7 @@ export default function Page() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Your account is ready. You can sign in and start using Habit Pet.
+                Your account is ready. You can sign in and start using HaBit Pet.
               </p>
             </CardContent>
           </Card>

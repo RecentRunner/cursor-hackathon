@@ -46,7 +46,7 @@ export async function generateAiTaskLabels(
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": siteUrl,
-      "X-Title": "Habit Pet",
+      "X-Title": "HaBit Pet",
     },
     body: JSON.stringify({
       model: DEFAULT_OPENROUTER_MODEL,

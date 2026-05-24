@@ -45,5 +45,13 @@ export function AvatarPageContent() {
     );
   }
 
-  return <PetHabitat customization={customization} fillViewport />;
+  return (
+    <PetHabitat
+      customization={customization}
+      fillViewport
+      onNameChange={(name) =>
+        setCustomization((current) => ({ ...current, name }))
+      }
+    />
+  );
 }

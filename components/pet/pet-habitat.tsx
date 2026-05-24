@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { AnimatedPetSprite } from "@/components/pet/animated-pet-sprite";
 import { ParallaxRoomBackground } from "@/components/pet/parallax-room-background";
+import { PetNameHeader } from "@/components/pet/pet-name-header";
 import { PetStyleLink } from "@/components/pet/pet-style-link";
 import { PixelGauge } from "@/components/pet/pixel-gauge";
 import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
@@ -23,6 +24,8 @@ type PetHabitatProps = {
   className?: string;
   fillViewport?: boolean;
   showStyleLink?: boolean;
+  nameEditable?: boolean;
+  onNameChange?: (name: string) => void;
   petScale?: number;
   lcdClassName?: string;
   lcdRef?: React.Ref<HTMLDivElement>;
@@ -39,6 +42,8 @@ export function PetHabitat({
   className,
   fillViewport = false,
   showStyleLink = true,
+  nameEditable = true,
+  onNameChange,
   petScale,
   lcdClassName: lcdClassNameOverride,
   lcdRef,
@@ -83,12 +88,12 @@ export function PetHabitat({
 
   return (
     <div className={shellClassName}>
-      <div className="mb-3 shrink-0 border-b-2 border-border/60 pb-3">
-        <p className="text-sm text-foreground">{customization.name}</p>
-        <p className="mt-1 text-[9px] uppercase tracking-[0.25em] text-secondary">
-          {MOOD_LABELS[condition.mood]}
-        </p>
-      </div>
+      <PetNameHeader
+        name={customization.name}
+        moodLabel={MOOD_LABELS[condition.mood]}
+        editable={nameEditable}
+        onNameChange={onNameChange}
+      />
 
       <div ref={lcdRef} className={lcdClassName}>
         <ParallaxRoomBackground roomId={roomId as RoomBackgroundId} />

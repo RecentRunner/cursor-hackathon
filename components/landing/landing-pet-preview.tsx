@@ -131,6 +131,10 @@ export function LandingPetPreview() {
       customization={customization}
       className="w-full max-w-sm"
       showStyleLink={false}
+      nameEditable={isSignedIn}
+      onNameChange={(name) =>
+        setCustomization((current) => ({ ...current, name }))
+      }
       petScale={petScale}
       lcdClassName="tamagotchi-lcd-landing"
       lcdRef={lcdRef}
