@@ -142,6 +142,28 @@
     @apply border-2 border-border bg-card text-card-foreground;
     box-shadow: var(--retro-shadow);
   }
+
+  .bottom-nav {
+    container-type: inline-size;
+    container-name: bottom-nav;
+  }
+
+  @container bottom-nav (max-width: 32rem) {
+    .bottom-nav-item-label {
+      display: none;
+    }
+
+    .bottom-nav-item {
+      gap: 0;
+      padding-top: 0.625rem;
+      padding-bottom: 0.625rem;
+    }
+
+    .bottom-nav-item-icon {
+      height: 1.75rem;
+      width: 1.75rem;
+    }
+  }
 }
 
 @layer utilities {

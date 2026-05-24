@@ -45,7 +45,7 @@ export function AppNav({ items = appNavItems }: AppNavProps) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-border bg-background/95 shadow-[0_-4px_0_0_hsl(280_45%_28%/0.35)] backdrop-blur supports-[backdrop-filter]:bg-background/90"
+      className="bottom-nav fixed inset-x-0 bottom-0 z-50 border-t-2 border-border bg-background/95 shadow-[0_-4px_0_0_hsl(280_45%_28%/0.35)] backdrop-blur supports-[backdrop-filter]:bg-background/90"
       style={{ height: "var(--bottom-nav-height)" }}
     >
       <div
@@ -68,15 +68,20 @@ export function AppNav({ items = appNavItems }: AppNavProps) {
             <Link
               key={item.href}
               href={item.href}
+              aria-label={item.label}
+              title={item.label}
               className={cn(
-                "flex flex-col items-center justify-center gap-1.5 border-2 px-1 py-2 text-[9px] leading-none transition-all duration-75",
+                "bottom-nav-item flex flex-col items-center justify-center gap-1.5 border-2 px-1 py-2 text-[9px] leading-none transition-all duration-75",
                 isActive
                   ? "border-secondary bg-primary text-primary-foreground shadow-[var(--retro-shadow-sm)] -translate-y-0.5"
                   : "border-transparent text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground hover:-translate-y-0.5",
               )}
             >
-              <Icon className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-              <span className="max-w-full truncate uppercase tracking-wide">
+              <Icon
+                className="bottom-nav-item-icon h-5 w-5 shrink-0"
+                strokeWidth={2.5}
+              />
+              <span className="bottom-nav-item-label max-w-full truncate uppercase tracking-wide">
                 {item.shortLabel}
               </span>
             </Link>
