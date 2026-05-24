@@ -16,6 +16,7 @@ type CharacterPieceSelectorProps = {
   color: HSL;
   skinColor?: HSL;
   onSelect: (variantId: string) => void;
+  onLockedSelect?: (variantId: string) => void;
 };
 
 export function CharacterPieceSelector({
@@ -25,6 +26,7 @@ export function CharacterPieceSelector({
   color,
   skinColor,
   onSelect,
+  onLockedSelect,
 }: CharacterPieceSelectorProps) {
   const slots = Array.from({ length: PIECE_SLOT_COUNT }, (_, index) =>
     variants[index] ?? null,
@@ -74,20 +76,25 @@ export function CharacterPieceSelector({
           <button
             key={variant.id}
             type="button"
-            disabled={locked}
-            aria-disabled={locked}
             title={
-              locked ? `${variant.label} — unlock in the shop` : variant.label
+              locked ? `${variant.label} — preview in shop` : variant.label
             }
             aria-label={
-              locked ? `${variant.label}, locked — unlock in the shop` : variant.label
+              locked ? `${variant.label}, locked — preview to unlock` : variant.label
             }
             aria-pressed={activeId === variant.id}
-            onClick={() => onSelect(variant.id)}
+            onClick={() => {
+              if (locked) {
+                onLockedSelect?.(variant.id);
+                return;
+              }
+
+              onSelect(variant.id);
+            }}
             className={cn(
               "relative flex size-14 items-center justify-center rounded-lg border bg-zinc-950/80 p-1.5 transition-colors",
               locked
-                ? "cursor-not-allowed border-border/40 opacity-80"
+                ? "border-border/40 opacity-80 hover:border-border hover:bg-zinc-900/60"
                 : activeId === variant.id
                   ? "border-foreground bg-zinc-900 shadow-[inset_0_0_0_1px_hsl(var(--foreground)/0.15)]"
                   : "border-border/60 hover:border-border hover:bg-zinc-900/60",

@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import Link from "next/link";
 import { useEffect } from "react";
 
 import { CharacterLayerPreview } from "@/components/character/character-layer-preview";
@@ -12,6 +13,7 @@ import {
   getShopPreviewRoomId,
 } from "@/lib/shop-preview";
 import type { ShopItemRecord } from "@/lib/shop-catalog";
+import { routes } from "@/lib/routes";
 
 type ShopItemPreviewModalProps = {
   item: ShopItemRecord | null;
@@ -24,6 +26,7 @@ type ShopItemPreviewModalProps = {
   onClose: () => void;
   onPurchase: () => void;
   onEquipToggle: () => void;
+  showCustomizeLink?: boolean;
 };
 
 export function ShopItemPreviewModal({
@@ -37,6 +40,7 @@ export function ShopItemPreviewModal({
   onClose,
   onPurchase,
   onEquipToggle,
+  showCustomizeLink = true,
 }: ShopItemPreviewModalProps) {
   useEffect(() => {
     if (!item) {
@@ -162,6 +166,12 @@ export function ShopItemPreviewModal({
                 </Button>
               </>
             )}
+
+            {showCustomizeLink ? (
+              <Button type="button" className="w-full" variant="outline" asChild>
+                <Link href={routes.customize}>Open in Customize</Link>
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>

@@ -94,3 +94,10 @@ function getDefaultPriceForLayer(layerId: ShopLayerId, variantId: string) {
 export function getLayerLabel(layerId: ShopLayerId) {
   return CHARACTER_LAYERS.find((layer) => layer.id === layerId)?.label ?? layerId;
 }
+
+export function findShopItemById(
+  items: readonly ShopItemRecord[],
+  itemId: string,
+): ShopItemRecord | undefined {
+  return items.find((item) => item.id === itemId);
+}

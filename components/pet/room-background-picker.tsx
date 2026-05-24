@@ -13,6 +13,7 @@ type RoomBackgroundPickerProps = {
   value: RoomBackgroundId;
   ownedItemIds: string[];
   onChange: (roomId: RoomBackgroundId) => void;
+  onLockedSelect?: (roomId: RoomBackgroundId) => void;
   compact?: boolean;
 };
 
@@ -20,6 +21,7 @@ export function RoomBackgroundPicker({
   value,
   ownedItemIds,
   onChange,
+  onLockedSelect,
   compact = false,
 }: RoomBackgroundPickerProps) {
   return (
@@ -47,14 +49,20 @@ export function RoomBackgroundPicker({
             <button
               key={room.id}
               type="button"
-              disabled={!unlocked}
               aria-pressed={selected}
               title={
                 unlocked
                   ? room.name
-                  : `${room.name} — unlock in the shop`
+                  : `${room.name} — preview in shop`
               }
-              onClick={() => onChange(room.id)}
+              onClick={() => {
+                if (!unlocked) {
+                  onLockedSelect?.(room.id);
+                  return;
+                }
+
+                onChange(room.id);
+              }}
               className={cn(
                 "relative aspect-[4/3] overflow-hidden border-2 transition-transform",
                 selected
@@ -62,7 +70,7 @@ export function RoomBackgroundPicker({
                   : "border-border/70",
                 unlocked
                   ? "hover:-translate-y-0.5"
-                  : "cursor-not-allowed opacity-80",
+                  : "opacity-80 hover:-translate-y-0.5",
               )}
             >
               <div className={cn("absolute inset-0", room.previewClassName)} />

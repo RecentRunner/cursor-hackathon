@@ -10,7 +10,9 @@ import {
   saveAvatarCustomization,
   type AvatarCustomization,
 } from "@/lib/avatar-customization-storage";
-import { getOwnedItemIds } from "@/lib/shop-storage";
+import { normalizeRoomBackgroundId } from "@/lib/room-backgrounds";
+import type { ShopItemRecord } from "@/lib/shop-catalog";
+import { getShopInventory } from "@/lib/shop-storage";
 
 export function CustomizePageContent() {
   const { toast } = useToast();
@@ -20,18 +22,30 @@ export function CustomizePageContent() {
   const [avatarName, setAvatarName] = useState("");
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [ownedVariantIds, setOwnedVariantIds] = useState<string[]>([]);
+  const [equippedItems, setEquippedItems] = useState<string[]>([]);
+  const [shopItems, setShopItems] = useState<ShopItemRecord[]>([]);
+  const [coins, setCoins] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadCustomization = useCallback(async () => {
     try {
       setLoadError(null);
-      const [next, owned] = await Promise.all([
+      const [next, inventory] = await Promise.all([
         getAvatarCustomization(),
-        getOwnedItemIds(),
+        getShopInventory(),
       ]);
-      setCustomization(next);
+      setCustomization({
+        ...next,
+        equippedItems: inventory.equippedItems,
+        roomBackground: normalizeRoomBackgroundId(
+          inventory.equippedRoomBackground,
+        ),
+      });
       setAvatarName(next.name);
-      setOwnedVariantIds(owned);
+      setOwnedVariantIds(inventory.ownedItemIds);
+      setEquippedItems(inventory.equippedItems);
+      setShopItems(inventory.items);
+      setCoins(inventory.coins);
     } catch (error) {
       setLoadError(
         error instanceof Error ? error.message : "Could not load your avatar.",
@@ -55,7 +69,6 @@ export function CustomizePageContent() {
       await saveAvatarCustomization({
         ...nextCustomization,
         name: avatarName.trim() || nextCustomization.name,
-        equippedItems: customization?.equippedItems ?? [],
       });
       toast("Avatar updated.", "success");
       await loadCustomization();
@@ -80,7 +93,7 @@ export function CustomizePageContent() {
 
   return (
     <CharacterCreator
-      key={`${customization.variants.head}-${customization.variants.torso}-${customization.colors.skin.l}-${customization.roomBackground}-${avatarName}`}
+      key={`${customization.variants.head}-${customization.variants.torso}-${customization.colors.skin.l}-${customization.roomBackground}-${avatarName}-${ownedVariantIds.join(",")}`}
       initialCustomization={{
         ...customization,
         name: avatarName,
@@ -88,6 +101,10 @@ export function CustomizePageContent() {
       name={avatarName}
       onNameChange={setAvatarName}
       ownedVariantIds={ownedVariantIds}
+      shopItems={shopItems}
+      coins={coins}
+      equippedItems={equippedItems}
+      onShopDataChange={loadCustomization}
       showNameField
       saveLabel={isSavingAvatar ? "Saving..." : "Save changes"}
       isSaving={isSavingAvatar}

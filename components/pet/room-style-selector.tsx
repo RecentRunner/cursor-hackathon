@@ -14,12 +14,14 @@ type RoomStyleSelectorProps = {
   activeId: RoomBackgroundId;
   ownedItemIds: readonly string[];
   onSelect: (roomId: RoomBackgroundId) => void;
+  onLockedSelect?: (roomId: RoomBackgroundId) => void;
 };
 
 export function RoomStyleSelector({
   activeId,
   ownedItemIds,
   onSelect,
+  onLockedSelect,
 }: RoomStyleSelectorProps) {
   const slots = Array.from({ length: PIECE_SLOT_COUNT }, (_, index) =>
     ROOM_BACKGROUNDS[index] ?? null,
@@ -44,20 +46,25 @@ export function RoomStyleSelector({
           <button
             key={room.id}
             type="button"
-            disabled={locked}
-            aria-disabled={locked}
             title={
-              locked ? `${room.name} — unlock in the shop` : room.name
+              locked ? `${room.name} — preview in shop` : room.name
             }
             aria-label={
-              locked ? `${room.name}, locked — unlock in the shop` : room.name
+              locked ? `${room.name}, locked — preview to unlock` : room.name
             }
             aria-pressed={activeId === room.id}
-            onClick={() => onSelect(room.id)}
+            onClick={() => {
+              if (locked) {
+                onLockedSelect?.(room.id);
+                return;
+              }
+
+              onSelect(room.id);
+            }}
             className={cn(
               "relative size-14 overflow-hidden rounded-lg border transition-colors",
               locked
-                ? "cursor-not-allowed border-border/40 opacity-80"
+                ? "border-border/40 opacity-80 hover:border-border"
                 : activeId === room.id
                   ? "border-foreground shadow-[inset_0_0_0_1px_hsl(var(--foreground)/0.15)]"
                   : "border-border/60 hover:border-border",
