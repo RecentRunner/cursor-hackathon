@@ -1,6 +1,6 @@
-# Habit Pet
+# HaBit
 
-Calgary hackathon app for building habits while caring for a customizable pixel pet.
+Hackathon app for building habits while growing a customizable digital self (your **bit**).
 
 ## Stack
 
@@ -13,9 +13,9 @@ Calgary hackathon app for building habits while caring for a customizable pixel 
 
 - **Auth** — email/password sign up and login
 - **Onboarding** — focus-topic quiz, then required avatar customization (DB-gated)
-- **Avatar** — layered sprite pet with per-layer styles and hex colors, naming, equipped shop items
+- **Avatar** — layered sprite bit with per-layer styles and hex colors, naming, equipped shop items
 - **Habits** — catalog + custom habits, streaks, coin rewards
-- **Daily quiz** — wellness sliders and journal that affect pet mood
+- **Daily quiz** — wellness sliders and journal that affect bit mood
 - **Shop** — buy and equip items from `shop_items` / `user_items` (hats, glasses, backgrounds)
 - **Profile** — focus topic, vibe, and reminder preferences
 
@@ -23,12 +23,12 @@ Calgary hackathon app for building habits while caring for a customizable pixel 
 
 1. Sign up / sign in
 2. **Step 1:** onboarding quiz (focus topic only)
-3. **Step 2:** avatar customization (required confirm + pet name)
-4. Main app via bottom nav: Pet, Habits, Quiz, Shop, Profile
+3. **Step 2:** avatar customization (required confirm + bit name)
+4. Main app via bottom nav: Bit, Habits, Quiz, Shop, Profile
 
 Onboarding progress is stored in the database (`profiles.onboarding_quiz_complete`, `profiles.onboarding_complete`, `avatar_state.avatar_customized`) and mirrored in auth metadata for fast client checks.
 
-On the **Pet** tab, users rename their pet and switch between **Overview** and **Customize** sub-tabs.
+On the **Bit** tab, users view their digital self and open **Style** to customize name, look, and room.
 
 ## Local setup
 
@@ -69,7 +69,7 @@ Stored in `avatar_state`:
 
 | Column | Purpose |
 |--------|---------|
-| `avatar_name` | Pet display name |
+| `avatar_name` | Bit display name |
 | `skin_color` | Skin layer hex color |
 | `pants_style` / `pants_color` | Pants variant id + hex |
 | `shoe_style` / `shoe_color` | Shoes variant id + hex |
@@ -78,34 +78,3 @@ Stored in `avatar_state`:
 | `head_style` / `head_color` | Head variant id + hex |
 | `avatar_customized` | True after onboarding confirm |
 | `equipped_items` | Shop item ids currently equipped |
-
-Style columns are validated against allowed variant ids (`none`, `pants-1`, …). Shop accessories overlay equipped variants at render time without overwriting saved customization.
-
-Sprite assets are added manually under `public/character/{layer}/` (e.g. `public/character/head/head-1.png`). Paths must match the variant ids in `lib/character/presets.ts` and `supabase/seed.sql`.
-
-## Shop
-
-- Sells character layer styles from `public/character/` (`head-1`, `pants-2`, etc.)
-- Shop item `id` = variant id, `type` = layer id (`head`, `pants`, `shoes`, `torso`, `eyes`)
-- Purchases unlock styles in `user_items`; owned styles appear in Customize and can be equipped from the shop
-- Catalog seeded in `supabase/seed.sql`
-
-## Supabase
-
-- Migrations: `supabase/migrations/`
-- Seed: `supabase/seed.sql`
-- Config: `supabase/config.toml`
-
-Production deploys on push to `main` via `.github/workflows/deploy.yml` (lint, build, `supabase db push --include-seed`, Vercel).
-
-## Routes
-
-| Route | Access |
-|-------|--------|
-| `/` | Public |
-| `/auth/*` | Public |
-| `/onboarding/quiz` | Authenticated, quiz incomplete |
-| `/onboarding/customize` | Authenticated, quiz complete, avatar not confirmed |
-| `/avatar` | Authenticated, onboarding complete |
-| `/habits`, `/daily/quiz`, `/shop`, `/profile` | Authenticated app |
-| `/character-creator` | Redirects to `/avatar?tab=customize` |

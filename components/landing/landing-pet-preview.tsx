@@ -20,11 +20,9 @@ function LandingPetPreviewSkeleton() {
       aria-hidden="true"
       className="tamagotchi-shell w-full max-w-sm overflow-hidden p-3 sm:p-4"
     >
-      <div className="mb-3 space-y-2 border-b-2 border-border/60 pb-3">
-        <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-        <div className="h-2 w-16 animate-pulse rounded bg-muted" />
+      <div className="tamagotchi-lcd tamagotchi-lcd-landing relative animate-pulse bg-muted/40">
+        <div className="absolute right-2 top-2 z-20 h-4 w-20 rounded bg-muted" />
       </div>
-      <div className="tamagotchi-lcd tamagotchi-lcd-landing animate-pulse bg-muted/40" />
     </div>
   );
 }
@@ -130,7 +128,7 @@ export function LandingPetPreview() {
     <PetHabitat
       customization={customization}
       className="w-full max-w-sm"
-      showStyleLink={false}
+      nameInLcd
       petScale={petScale}
       lcdClassName="tamagotchi-lcd-landing"
       lcdRef={lcdRef}
@@ -141,7 +139,7 @@ export function LandingPetPreview() {
     return (
       <Link
         href={routes.avatar}
-        aria-label="Go to your pet"
+        aria-label="Go to your bit"
         className={cn(
           "block w-full max-w-sm rounded-sm transition-transform",
           "hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

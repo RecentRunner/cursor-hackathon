@@ -51,7 +51,7 @@ type AvatarStateRow = {
   room_background: string | null;
 };
 
-export const DEFAULT_AVATAR_NAME = "Pixel Me";
+export const DEFAULT_AVATAR_NAME = "My Bit";
 const DEFAULT_HEX = DEFAULT_GRAY_COLOR.hex;
 const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 

@@ -32,7 +32,7 @@ export function RoomBackgroundPicker({
             Room background
           </h3>
           <p className="mt-1 text-[9px] text-muted-foreground">
-            Pick the scene behind your pet. Premium rooms unlock in the shop.
+            Pick the scene behind your bit. Premium rooms unlock in the shop.
           </p>
         </div>
       ) : (
@@ -71,16 +71,12 @@ export function RoomBackgroundPicker({
                 "hover:-translate-y-0.5",
               )}
             >
-              {room.sceneImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={room.sceneImage}
-                  alt=""
-                  className="absolute inset-0 size-full object-cover image-pixelated"
-                />
-              ) : (
-                <div className={cn("absolute inset-0", room.previewClassName)} />
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={room.sceneImage}
+                alt=""
+                className="absolute inset-0 size-full object-cover image-pixelated"
+              />
               <p className="absolute inset-x-0 bottom-0 bg-black/55 px-1.5 py-1 text-left text-[8px] uppercase tracking-wider text-foreground">
                 {room.name}
               </p>

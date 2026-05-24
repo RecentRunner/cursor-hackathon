@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --app-topbar-height: 3.5rem;
+    --app-topbar-height: 3.25rem;
     --app-viewport-bottom-offset: 0px;
     --app-nav-offset: 6rem;
     --bottom-nav-height: 6rem;
@@ -117,7 +117,7 @@
     border: 3px solid hsl(var(--lcd-border));
   }
 
-  /* Matches pet-tab LCD: max-w-lg main minus px-5 and shell p-4 */
+  /* Matches bit-tab LCD: max-w-lg main minus px-5 and shell p-4 */
   .tamagotchi-lcd-pet-match {
     @apply aspect-[4/3] w-full shrink-0;
     max-width: calc(32rem - 2.5rem - 2rem);
@@ -127,6 +127,15 @@
   .tamagotchi-lcd-landing {
     @apply aspect-[4/3] w-full shrink-0;
     max-height: clamp(120px, 36vw, 240px);
+    container-type: inline-size;
+  }
+
+  .tamagotchi-lcd-landing .lcd-readable-name-landing {
+    max-width: 58%;
+    padding: 0.125rem 0.375rem;
+    font-size: clamp(0.4rem, 4.5cqi, 0.5625rem);
+    line-height: 1.2;
+    box-shadow: 1px 1px 0 0 hsl(280 45% 28%);
   }
 
   .tamagotchi-lcd-landing > div.absolute svg {
@@ -147,16 +156,6 @@
     min-height: 16rem;
     max-width: none;
     aspect-ratio: auto;
-  }
-
-  .customize-body {
-    min-height: 26rem;
-  }
-
-  @media (min-width: 1024px) {
-    .customize-body {
-      min-height: 30rem;
-    }
   }
 
   .retro-btn {
@@ -222,6 +221,53 @@
   .image-pixelated {
     image-rendering: pixelated;
   }
+
+  .field-locked {
+    @apply cursor-not-allowed border-border/60 bg-muted/70 text-muted-foreground opacity-75;
+  }
+
+  .form-section-locked {
+    @apply border-border/50 bg-muted/35;
+  }
+
+  .form-section-locked .field-locked,
+  .form-section-locked input:disabled,
+  .form-section-locked textarea:disabled {
+    @apply cursor-not-allowed opacity-75;
+  }
+
+  .form-section-locked input[type="range"]:disabled {
+    @apply opacity-50 grayscale;
+  }
+
+  .form-section-locked label {
+    @apply text-muted-foreground;
+  }
+
+  .lcd-readable-label {
+    @apply border-2 border-border bg-card px-2.5 py-1.5 text-center font-pixel text-[8px] leading-snug text-card-foreground sm:text-[9px];
+    box-shadow: var(--retro-shadow-sm);
+  }
+
+  .lcd-readable-name {
+    @apply border-2 border-border bg-card px-2 py-1 font-pixel leading-snug text-card-foreground;
+    box-shadow: var(--retro-shadow-sm);
+  }
+}
+
+@keyframes emotion-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-emotion-pop {
+  animation: emotion-pop 0.2s steps(4) both;
 }
 
 @keyframes pet-breathe {

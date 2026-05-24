@@ -12,7 +12,7 @@ export function PetStyleLink({ className }: PetStyleLinkProps) {
   return (
     <Link
       href={routes.customize}
-      aria-label="Customize pet style"
+      aria-label="Customize bit style"
       title="Style"
       className={cn(
         "flex shrink-0 items-center justify-center border-2 border-border bg-card/90 p-2 shadow-[var(--retro-shadow-sm)] transition-transform hover:-translate-y-0.5 hover:border-primary/60",

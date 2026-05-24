@@ -6,6 +6,7 @@ import { forwardRef } from "react";
 import {
   Home,
   ListPlus,
+  Palette,
   ShoppingBag,
   Sparkles,
   UserRound,
@@ -29,6 +30,7 @@ const gridColsClass = {
 
 const navIcons = {
   [routes.avatar]: Home,
+  [routes.customize]: Palette,
   [routes.habits]: ListPlus,
   [routes.dailyQuiz]: Sparkles,
   [routes.shop]: ShoppingBag,

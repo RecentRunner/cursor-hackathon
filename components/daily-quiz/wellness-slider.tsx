@@ -30,10 +30,14 @@ export function WellnessSlider({
   const displayValue = formatValue ? formatValue(value) : `${value}${unit ?? ""}`;
 
   return (
-    <div className="space-y-2">
+    <div className={disabled ? "space-y-2 opacity-90" : "space-y-2"}>
       <div className="flex items-center justify-between text-sm">
-        <Label htmlFor={id}>{label}</Label>
-        <span className="text-muted-foreground">{displayValue}</span>
+        <Label htmlFor={id} className={disabled ? "text-muted-foreground" : undefined}>
+          {label}
+        </Label>
+        <span className={disabled ? "text-muted-foreground/80" : "text-muted-foreground"}>
+          {displayValue}
+        </span>
       </div>
       <input
         id={id}
@@ -44,7 +48,11 @@ export function WellnessSlider({
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="w-full accent-primary disabled:opacity-60"
+        className={
+          disabled
+            ? "w-full cursor-not-allowed accent-muted-foreground opacity-50 grayscale"
+            : "w-full accent-primary"
+        }
       />
     </div>
   );

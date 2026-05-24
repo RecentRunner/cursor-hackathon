@@ -11,6 +11,7 @@ type PixelAvatarProps = {
   mood?: AvatarMood;
   size?: "sm" | "md" | "lg";
   className?: string;
+  showMoodLabel?: boolean;
 };
 
 const sizeStyles = {
@@ -23,11 +24,12 @@ export function PixelAvatar({
   mood = "neutral",
   size = "lg",
   className,
+  showMoodLabel = true,
 }: PixelAvatarProps) {
   return (
     <div
       className={cn("flex flex-col items-center gap-3", className)}
-      aria-label={`Pixel pet avatar, mood ${mood}`}
+      aria-label={`Bit avatar, mood ${mood}`}
     >
       <div
         className={cn(
@@ -43,9 +45,11 @@ export function PixelAvatar({
         </div>
         <div className="absolute bottom-[24%] left-1/2 h-1 w-4 -translate-x-1/2 rounded-[1px] bg-foreground/80" />
       </div>
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-        {mood}
-      </p>
+      {showMoodLabel ? (
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          {mood}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -7,8 +7,8 @@ export default function CustomizePage() {
   return (
     <AppShell
       wide
-      title="Customize your pet"
-      description="Change your pet's name, styles, colors, and room."
+      title="Customize your bit"
+      description="Change your bit's name, styles, colors, and room."
     >
       <Suspense fallback={<p className="text-xs text-muted-foreground">Loading...</p>}>
         <CustomizePageContent />

@@ -30,7 +30,7 @@ export function OnboardingCustomizeForm() {
         },
         { completeOnboarding: true },
       );
-      toast("Avatar confirmed. Welcome to Habit Pet!", "success");
+      toast("Avatar confirmed. Welcome to HaBit!", "success");
       router.push(routes.avatar);
       router.refresh();
     } catch (saveError) {
@@ -49,8 +49,8 @@ export function OnboardingCustomizeForm() {
   return (
     <AvatarCustomizeLayout
       eyebrow="Step 2 of 2"
-      title="Create your Habit Pet"
-      description="Customize your pet's look, give them a name, and confirm before entering the app."
+      title="Create your bit"
+      description="Customize your digital self, give them a name, and confirm before entering the app."
     >
       <CharacterCreator
         initialCustomization={defaultAvatarCustomization}

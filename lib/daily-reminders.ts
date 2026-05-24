@@ -129,7 +129,7 @@ export function buildDailyReminderNotification(status: DailyReminderStatus) {
   if (!status.quizCompleted) {
     return {
       title: "Time for your daily check-in",
-      body: "Complete today's wellness quiz to keep your pet happy.",
+      body: "Complete today's wellness quiz to keep your bit in good spirits.",
       targetUrl,
     };
   }
@@ -174,7 +174,7 @@ export function showTestSystemDailyReminderNotification(
   }
 
   const { body, targetUrl } = buildDailyReminderNotification(status);
-  const notification = new Notification("Test: Habit Pet reminder", {
+  const notification = new Notification("Test: HaBit reminder", {
     body: `This is a browser test notification. ${body}`,
     tag: `habit-pet-daily-reminder-test-${Date.now()}`,
   });

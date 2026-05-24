@@ -16,6 +16,9 @@ import {
   getStreakMilestoneBonus,
 } from "@/lib/coins";
 import { createClient } from "@/lib/supabase/client";
+import { getTodayDateKey } from "@/lib/date-keys";
+
+export { getTodayDateKey };
 
 export type Habit = {
   id: string;
@@ -42,10 +45,6 @@ type HabitRow = {
 
 const habitSelectFields =
   "id, name, streak, last_completed_on, claimed_streak_milestones";
-
-export function getTodayDateKey(date = new Date()) {
-  return date.toISOString().slice(0, 10);
-}
 
 function getDayDiff(fromDate: string, toDate: string) {
   const from = new Date(`${fromDate}T00:00:00`);

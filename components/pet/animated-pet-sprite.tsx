@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 
 import { CharacterLayerPreview } from "@/components/character/character-layer-preview";
+import { PetEmotionBubble } from "@/components/pet/pet-emotion-bubble";
 import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
+import type { AvatarMood } from "@/lib/avatar-state";
 import {
   PET_WANDER_BOUNDS,
   PET_WANDER_START,
@@ -14,6 +16,10 @@ type AnimatedPetSpriteProps = {
   customization: AvatarCustomization;
   className?: string;
   petScale?: number;
+  interactive?: boolean;
+  onInteract?: () => void;
+  emotionVisible?: boolean;
+  mood?: AvatarMood;
 };
 
 type WanderPosition = {
@@ -54,6 +60,10 @@ export function AnimatedPetSprite({
   customization,
   className,
   petScale = 7,
+  interactive = false,
+  onInteract,
+  emotionVisible = false,
+  mood = "neutral",
 }: AnimatedPetSpriteProps) {
   const [position, setPosition] = useState<WanderPosition>({
     x: PET_WANDER_START.x,
@@ -80,16 +90,45 @@ export function AnimatedPetSprite({
     };
   }, []);
 
+  const handleActivate = () => {
+    if (!interactive) {
+      return;
+    }
+
+    onInteract?.();
+  };
+
   return (
     <div
-      className={cn("pointer-events-none absolute z-10", className)}
+      className={cn(
+        "absolute z-10",
+        interactive
+          ? "pointer-events-auto cursor-pointer"
+          : "pointer-events-none",
+        className,
+      )}
       style={{
         left: `${position.x}%`,
         top: `${position.y}%`,
         transform: "translate(-50%, -100%)",
         transition: "left 1.8s steps(10), top 1.8s steps(10)",
       }}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? "Check how your bit is feeling" : undefined}
+      onClick={(event) => {
+        event.stopPropagation();
+        handleActivate();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          event.stopPropagation();
+          handleActivate();
+        }
+      }}
     >
+      <PetEmotionBubble mood={mood} visible={emotionVisible} />
       <div
         style={{
           transform: position.facing === "left" ? "scaleX(-1)" : undefined,

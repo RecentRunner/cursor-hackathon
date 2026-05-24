@@ -1,43 +1,45 @@
-import {
-  DEFAULT_AVATAR_NAME,
-  type AvatarCustomization,
-} from "@/lib/avatar-customization-storage";
+import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
 import {
   CHARACTER_LAYERS,
   COLOR_PRESETS,
   NONE_VARIANT_ID,
   type CharacterLayerId,
 } from "@/lib/character/presets";
-import { ROOM_BACKGROUNDS } from "@/lib/room-backgrounds";
+import { clampHsl } from "@/lib/character/color-utils";
+import {
+  ROOM_BACKGROUNDS,
+  type RoomBackgroundId,
+} from "@/lib/room-backgrounds";
 
 const GUEST_PET_STORAGE_KEY = "habit-pet-guest-landing-pet";
 
-const SKIN_TONE_IDS = [
-  "porcelain",
-  "fair",
-  "light",
-  "medium",
-  "tan",
-  "brown",
-  "dark",
-  "deep",
-  "onyx",
+export const GUEST_LANDING_BIT_NAMES = [
+  "Alex",
+  "Jordan",
+  "Sam",
+  "Taylor",
+  "Morgan",
 ] as const;
 
-const OUTFIT_COLOR_IDS = [
-  "red",
-  "orange",
-  "yellow",
-  "green",
-  "blue",
-  "indigo",
-  "black",
-  "white",
-] as const;
+const SKIN_COLOR_PRESETS = COLOR_PRESETS.filter((preset) =>
+  [
+    "porcelain",
+    "fair",
+    "light",
+    "medium",
+    "tan",
+    "brown",
+    "dark",
+    "deep",
+    "onyx",
+  ].includes(preset.id),
+);
 
-const EYE_COLOR_IDS = ["blue", "black", "green", "brown"] as const;
+const STYLE_COLOR_PRESETS = COLOR_PRESETS.filter(
+  (preset) => !SKIN_COLOR_PRESETS.some((skin) => skin.id === preset.id),
+);
 
-const HAIR_COLOR_IDS = ["brown", "black", "yellow", "red", "orange", "white"] as const;
+const ALL_ROOM_IDS = ROOM_BACKGROUNDS.map((room) => room.id);
 
 function pickRandom<T>(items: readonly T[]): T {
   return items[Math.floor(Math.random() * items.length)]!;
@@ -52,48 +54,61 @@ function presetHsl(id: string) {
   return { ...preset.hsl };
 }
 
-function pickRandomVariant(
-  layerId: Exclude<CharacterLayerId, "skin">,
-  allowNone = false,
-): string {
+function randomHsl(): { h: number; s: number; l: number } {
+  return clampHsl({
+    h: Math.floor(Math.random() * 360),
+    s: 35 + Math.floor(Math.random() * 50),
+    l: 28 + Math.floor(Math.random() * 45),
+  });
+}
+
+function pickRandomLayerColor(layerId: CharacterLayerId) {
+  if (layerId === "skin") {
+    return presetHsl(pickRandom(SKIN_COLOR_PRESETS).id);
+  }
+
+  if (Math.random() < 0.35) {
+    return randomHsl();
+  }
+
+  return presetHsl(pickRandom(STYLE_COLOR_PRESETS).id);
+}
+
+function pickRandomLayerVariant(layerId: CharacterLayerId): string {
   const layer = CHARACTER_LAYERS.find((entry) => entry.id === layerId);
   if (!layer) {
     throw new Error(`Missing character layer: ${layerId}`);
   }
 
-  const options = layer.variants
-    .map((variant) => variant.id)
-    .filter((id) => allowNone || id !== NONE_VARIANT_ID);
+  if (!layer.allowVariants) {
+    return layer.variants[0]?.id ?? NONE_VARIANT_ID;
+  }
 
-  return pickRandom(options);
+  return pickRandom(layer.variants.map((variant) => variant.id));
 }
 
 export function buildRandomLandingPetCustomization(): AvatarCustomization {
-  const freeRooms = ROOM_BACKGROUNDS.filter((room) => room.free).map(
-    (room) => room.id,
-  );
-
   return {
-    name: DEFAULT_AVATAR_NAME,
+    name: pickRandom(GUEST_LANDING_BIT_NAMES),
     colors: {
-      skin: presetHsl(pickRandom(SKIN_TONE_IDS)),
-      pants: presetHsl(pickRandom(OUTFIT_COLOR_IDS)),
-      shoes: presetHsl(pickRandom(OUTFIT_COLOR_IDS)),
-      torso: presetHsl(pickRandom(OUTFIT_COLOR_IDS)),
-      eyes: presetHsl(pickRandom(EYE_COLOR_IDS)),
-      head: presetHsl(pickRandom(HAIR_COLOR_IDS)),
+      skin: pickRandomLayerColor("skin"),
+      pants: pickRandomLayerColor("pants"),
+      shoes: pickRandomLayerColor("shoes"),
+      torso: pickRandomLayerColor("torso"),
+      eyes: pickRandomLayerColor("eyes"),
+      head: pickRandomLayerColor("head"),
     },
     variants: {
-      skin: "skin-1",
-      pants: pickRandomVariant("pants"),
-      shoes: pickRandomVariant("shoes"),
-      torso: pickRandomVariant("torso"),
-      eyes: pickRandomVariant("eyes"),
-      head: pickRandomVariant("head", Math.random() < 0.15),
+      skin: pickRandomLayerVariant("skin"),
+      pants: pickRandomLayerVariant("pants"),
+      shoes: pickRandomLayerVariant("shoes"),
+      torso: pickRandomLayerVariant("torso"),
+      eyes: pickRandomLayerVariant("eyes"),
+      head: pickRandomLayerVariant("head"),
     },
     customized: true,
     equippedItems: [],
-    roomBackground: pickRandom(freeRooms),
+    roomBackground: pickRandom(ALL_ROOM_IDS) as RoomBackgroundId,
   };
 }
 
@@ -105,7 +120,14 @@ export function getGuestLandingPetCustomization(): AvatarCustomization {
   try {
     const cached = sessionStorage.getItem(GUEST_PET_STORAGE_KEY);
     if (cached) {
-      return JSON.parse(cached) as AvatarCustomization;
+      const parsed = JSON.parse(cached) as AvatarCustomization;
+      if (
+        GUEST_LANDING_BIT_NAMES.includes(
+          parsed.name as (typeof GUEST_LANDING_BIT_NAMES)[number],
+        )
+      ) {
+        return parsed;
+      }
     }
 
     const next = buildRandomLandingPetCustomization();

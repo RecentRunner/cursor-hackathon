@@ -70,16 +70,12 @@ export function RoomStyleSelector({
                   : "border-border/60 hover:border-border",
             )}
           >
-            {room.sceneImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={room.sceneImage}
-                alt=""
-                className="absolute inset-0 size-full object-cover image-pixelated"
-              />
-            ) : (
-              <div className={cn("absolute inset-0", room.previewClassName)} />
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={room.sceneImage}
+              alt=""
+              className="absolute inset-0 size-full object-cover image-pixelated"
+            />
             {locked ? (
               <span
                 aria-hidden

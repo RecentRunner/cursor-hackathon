@@ -6,8 +6,8 @@ import { AppShell } from "@/components/layout/app-shell";
 export default function AvatarPage() {
   return (
     <AppShell
-      title="Your Habit Pet"
-      description="Watch your pet roam, breathe, and react to how you care for them."
+      title="Your bit"
+      description="Watch your digital self roam, breathe, and react to how you care for yourself."
       fillViewport
       centered
     >

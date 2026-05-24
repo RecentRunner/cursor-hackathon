@@ -3,6 +3,7 @@ import { Press_Start_2P, Share_Tech_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
 import { GlobalBottomNav } from "@/components/layout/global-bottom-nav";
+import { SiteHeader } from "@/components/layout/site-header";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
@@ -12,8 +13,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Habit Pet",
-  description: "Build habits, care for your pixel pet, and track wellness every day.",
+  title: "HaBit",
+  description: "Build habits, grow your digital self, and track wellness every day.",
 };
 
 export const viewport: Viewport = {
@@ -52,7 +53,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ToastProvider>
-            {children}
+            <SiteHeader />
+            <div className="flex min-h-dvh flex-col pt-topbar">{children}</div>
             <GlobalBottomNav />
           </ToastProvider>
         </ThemeProvider>

@@ -1,14 +1,7 @@
-import { AuthBottomNav } from "@/components/layout/auth-bottom-nav";
-
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      {children}
-      <AuthBottomNav />
-    </>
-  );
+  return <div className="flex min-h-0 flex-1 flex-col pb-nav">{children}</div>;
 }

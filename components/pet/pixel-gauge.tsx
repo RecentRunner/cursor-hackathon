@@ -11,6 +11,8 @@ type PixelGaugeProps = {
   max?: number;
   className?: string;
   variant?: "default" | "overlay";
+  /** Overlay icon size. Use "responsive" on the bit tab LCD. */
+  overlaySize?: "md" | "lg" | "responsive";
 };
 
 export function PixelGauge({
@@ -19,6 +21,7 @@ export function PixelGauge({
   max = WELLNESS_SCALE_MAX,
   className,
   variant = "default",
+  overlaySize = "md",
 }: PixelGaugeProps) {
   const filled = Math.max(0, Math.min(max, Math.round(value)));
   const Icon = type === "heart" ? Heart : Zap;
@@ -29,6 +32,12 @@ export function PixelGauge({
       : "fill-amber-300 text-amber-300";
   const emptyClass = "text-muted-foreground/35";
   const isOverlay = variant === "overlay";
+  const overlayIconClass =
+    overlaySize === "responsive"
+      ? "h-[clamp(1.125rem,3.6vw,3rem)] w-[clamp(1.125rem,3.6vw,3rem)]"
+      : overlaySize === "lg"
+        ? "size-12"
+        : "size-6";
 
   return (
     <div
@@ -44,13 +53,22 @@ export function PixelGauge({
           {label}
         </span>
       ) : null}
-      <div className={cn("flex items-center", isOverlay ? "gap-1" : "gap-0.5")}>
+      <div
+        className={cn(
+          "flex items-center",
+          isOverlay
+            ? overlaySize === "responsive"
+              ? "gap-0.5 sm:gap-1"
+              : "gap-1"
+            : "gap-0.5",
+        )}
+      >
         {Array.from({ length: max }, (_, index) => (
           <Icon
             key={`${type}-${index}`}
             className={cn(
               "shrink-0 stroke-[2.5]",
-              isOverlay ? "size-6" : "size-4",
+              isOverlay ? overlayIconClass : "size-4",
               index < filled ? activeClass : emptyClass,
             )}
             aria-hidden
