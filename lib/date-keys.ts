@@ -17,3 +17,12 @@ export function getNextLocalMidnight(from = new Date()) {
 export function getMillisecondsUntilLocalMidnight(from = new Date()) {
   return Math.max(0, getNextLocalMidnight(from).getTime() - from.getTime());
 }
+
+export function formatCountdownDuration(milliseconds: number) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}

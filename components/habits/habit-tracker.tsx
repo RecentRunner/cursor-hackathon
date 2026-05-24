@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { DailyTasksCountdown } from "@/components/habits/daily-tasks-countdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,29 @@ const reasonLabels = {
   custom: "Custom",
   suggested: "Suggested for you",
 } as const;
+
+function DailyTasksCardHeader({
+  description,
+  onDayChange,
+}: {
+  description: string;
+  onDayChange: () => void;
+}) {
+  return (
+    <CardHeader>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <CardTitle className="text-base">Today&apos;s tasks</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <DailyTasksCountdown
+          className="w-full shrink-0 sm:max-w-[14rem]"
+          onDayChange={onDayChange}
+        />
+      </div>
+    </CardHeader>
+  );
+}
 
 function DailyTaskList({
   tasks,
@@ -424,13 +448,12 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
     return (
       <div className="flex flex-col gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Today&apos;s tasks</CardTitle>
-            <CardDescription>
-              Personalized from your focus topics
-              {quizCompletedToday ? ", today's quiz," : ""} and custom habits.
-            </CardDescription>
-          </CardHeader>
+          <DailyTasksCardHeader
+            description={`Personalized from your focus topics${
+              quizCompletedToday ? ", today's quiz," : ""
+            } and custom habits.`}
+            onDayChange={refresh}
+          />
           <CardContent className="space-y-4">
             {error ? <p className="text-sm text-red-500">{error}</p> : null}
             {coinMessage ? (
@@ -572,12 +595,10 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Today&apos;s tasks</CardTitle>
-        <CardDescription>
-          Personalized from your profile, daily quiz, journal, and custom habits.
-        </CardDescription>
-      </CardHeader>
+      <DailyTasksCardHeader
+        description="Personalized from your profile, daily quiz, journal, and custom habits."
+        onDayChange={refresh}
+      />
       <CardContent className="space-y-4">
         {error ? <p className="text-sm text-red-500">{error}</p> : null}
         {coinMessage ? (
