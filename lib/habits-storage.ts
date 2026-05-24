@@ -4,7 +4,13 @@ import {
   getCatalogIdByLabel,
   isCatalogLabel,
 } from "@/lib/habit-catalog";
+import { adjustCoins } from "@/lib/avatar-progression-storage";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
+import {
+  COINS_PER_TASK_COMPLETE,
+  COINS_PER_TASK_UNCHECK,
+  getStreakMilestoneBonus,
+} from "@/lib/coins";
 import { createClient } from "@/lib/supabase/client";
 
 export type Habit = {
@@ -16,12 +22,21 @@ export type Habit = {
   isCustom: boolean;
 };
 
+export type ToggleHabitResult = {
+  habits: Habit[];
+  coinsDelta: number;
+};
+
 type HabitRow = {
   id: string;
   name: string;
   streak: number;
   last_completed_on: string | null;
+  claimed_streak_milestones?: number[];
 };
+
+const habitSelectFields =
+  "id, name, streak, last_completed_on, claimed_streak_milestones";
 
 export function getTodayDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
@@ -50,10 +65,48 @@ function mapHabitRow(row: HabitRow): Habit {
     id: row.id,
     label: row.name,
     catalogId: getCatalogIdByLabel(row.name),
-    streak: row.streak,
-    lastCompletedDate: row.last_completed_on,
+    streak: row.streak ?? 0,
+    lastCompletedDate: row.last_completed_on ?? null,
     isCustom: !isCatalogLabel(row.name),
   };
+}
+
+function getFirstRow<T>(rows: T[] | null | undefined) {
+  return rows?.[0] ?? null;
+}
+
+function dedupeHabitsByName(rows: HabitRow[]) {
+  const seen = new Map<string, HabitRow>();
+
+  for (const row of rows) {
+    const key = row.name.trim().toLowerCase();
+
+    if (!seen.has(key)) {
+      seen.set(key, row);
+    }
+  }
+
+  return Array.from(seen.values());
+}
+
+async function findActiveHabitByName(
+  userId: string,
+  name: string,
+): Promise<HabitRow | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("habits")
+    .select(habitSelectFields)
+    .eq("user_id", userId)
+    .eq("name", name)
+    .eq("active", true)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return getFirstRow(data as HabitRow[] | null);
 }
 
 async function getAuthenticatedUserId() {
@@ -87,13 +140,16 @@ async function reconcileMissedDayStreaks(
 
   await Promise.all(
     habitsToReset.map((habit) =>
-      supabase.from("habits").update({ streak: 0 }).eq("id", habit.id),
+      supabase
+        .from("habits")
+        .update({ streak: 0, claimed_streak_milestones: [] })
+        .eq("id", habit.id),
     ),
   );
 
   return habits.map((habit) =>
     habitsToReset.some((item) => item.id === habit.id)
-      ? { ...habit, streak: 0 }
+      ? { ...habit, streak: 0, claimed_streak_milestones: [] }
       : habit,
   );
 }
@@ -111,14 +167,13 @@ async function getPreviousCompletedDate(
     .eq("habit_id", habitId)
     .neq("completed_on", today)
     .order("completed_on", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data?.completed_on ?? null;
+  return getFirstRow(data as { completed_on: string }[] | null)?.completed_on ?? null;
 }
 
 export function isHabitCompletedToday(habit: Habit, today = getTodayDateKey()) {
@@ -135,7 +190,7 @@ export async function getHabits(): Promise<Habit[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("habits")
-    .select("id, name, streak, last_completed_on")
+    .select(habitSelectFields)
     .eq("user_id", userId)
     .eq("active", true)
     .order("created_at", { ascending: true });
@@ -144,7 +199,9 @@ export async function getHabits(): Promise<Habit[]> {
     throw new Error(error.message);
   }
 
-  const rows = await reconcileMissedDayStreaks((data ?? []) as HabitRow[]);
+  const rows = await reconcileMissedDayStreaks(
+    dedupeHabitsByName((data ?? []) as HabitRow[]),
+  );
 
   return rows.map(mapHabitRow);
 }
@@ -163,19 +220,7 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
   }
 
   const supabase = createClient();
-  const { data: existing, error: existingError } = await supabase
-    .from("habits")
-    .select("id, name, streak, last_completed_on")
-    .eq("user_id", userId)
-    .eq("name", entry.label)
-    .eq("active", true)
-    .maybeSingle();
-
-  if (existingError) {
-    throw new Error(existingError.message);
-  }
-
-  let row = existing as HabitRow | null;
+  let row = await findActiveHabitByName(userId, entry.label);
 
   if (!row) {
     const { data: inserted, error: insertError } = await supabase
@@ -186,25 +231,31 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
         active: true,
         streak: 0,
       })
-      .select("id, name, streak, last_completed_on")
+      .select(habitSelectFields)
       .single();
 
     if (insertError) {
-      throw new Error(insertError.message);
-    }
+      row = await findActiveHabitByName(userId, entry.label);
 
-    row = inserted as HabitRow;
+      if (!row) {
+        throw new Error(insertError.message);
+      }
+    } else {
+      row = inserted as HabitRow;
+    }
   }
 
   const [reconciledRow] = await reconcileMissedDayStreaks([row]);
   return mapHabitRow(reconciledRow);
 }
 
-export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
+export async function toggleHabitCompletion(
+  habitId: string,
+): Promise<ToggleHabitResult> {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
-    return [];
+    return { habits: [], coinsDelta: 0 };
   }
 
   const supabase = createClient();
@@ -212,7 +263,7 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
 
   const { data: habit, error: habitError } = await supabase
     .from("habits")
-    .select("id, name, streak, last_completed_on")
+    .select(habitSelectFields)
     .eq("id", habitId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -226,25 +277,29 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
   }
 
   const [reconciledHabit] = await reconcileMissedDayStreaks([habit as HabitRow]);
-  let currentStreak = reconciledHabit.streak;
+  const currentStreak = reconciledHabit.streak;
 
-  const { data: existingLog, error: existingLogError } = await supabase
+  const { data: existingLogs, error: existingLogError } = await supabase
     .from("habit_logs")
     .select("id")
     .eq("user_id", userId)
     .eq("habit_id", habitId)
-    .eq("completed_on", today)
-    .maybeSingle();
+    .eq("completed_on", today);
 
   if (existingLogError) {
     throw new Error(existingLogError.message);
   }
 
+  const existingLog = getFirstRow(existingLogs as { id: string }[] | null);
+  let coinsDelta = 0;
+
   if (existingLog) {
     const { error: deleteError } = await supabase
       .from("habit_logs")
       .delete()
-      .eq("id", existingLog.id);
+      .eq("user_id", userId)
+      .eq("habit_id", habitId)
+      .eq("completed_on", today);
 
     if (deleteError) {
       throw new Error(deleteError.message);
@@ -265,6 +320,8 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
     if (updateError) {
       throw new Error(updateError.message);
     }
+
+    coinsDelta = COINS_PER_TASK_UNCHECK;
   } else {
     const { error: insertError } = await supabase.from("habit_logs").insert({
       user_id: userId,
@@ -277,12 +334,20 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
     }
 
     const nextStreak = currentStreak + 1;
+    const claimedMilestones = reconciledHabit.claimed_streak_milestones ?? [];
+    const milestoneBonus = getStreakMilestoneBonus(nextStreak);
+    const earnedMilestoneBonus =
+      milestoneBonus !== null && !claimedMilestones.includes(nextStreak);
+    const nextClaimedMilestones = earnedMilestoneBonus
+      ? [...claimedMilestones, nextStreak]
+      : claimedMilestones;
 
     const { error: updateError } = await supabase
       .from("habits")
       .update({
         streak: nextStreak,
         last_completed_on: today,
+        claimed_streak_milestones: nextClaimedMilestones,
       })
       .eq("id", habitId)
       .eq("user_id", userId);
@@ -290,10 +355,15 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
     if (updateError) {
       throw new Error(updateError.message);
     }
+
+    coinsDelta =
+      COINS_PER_TASK_COMPLETE + (earnedMilestoneBonus ? milestoneBonus : 0);
   }
 
+  await adjustCoins(coinsDelta);
+
   notifyHabitPetDataUpdated();
-  return getHabits();
+  return { habits: await getHabits(), coinsDelta };
 }
 
 export async function addHabit(label: string): Promise<Habit[]> {
