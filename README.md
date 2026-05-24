@@ -132,7 +132,7 @@ Onboarding progress is stored in the database (`profiles.onboarding_quiz_complet
 |------|--------|------------------|
 | UI | Owen | Layout, visual design, avatar display, dashboard screens, UX |
 | Backend / Cloud | Harkamal | Database, backend logic, habit tracking, streaks, deployment |
-| PM / Float | Mason | Planning, scope, task organization, final presentation |
+| Backend / Frontend | Mason | Planning, scope, task organization, final presentation |
 
 ---
 
@@ -142,7 +142,7 @@ Onboarding progress is stored in the database (`profiles.onboarding_quiz_complet
 |-------|------------|
 | Frontend | Next.js 16 (App Router), React 19, Tailwind CSS, shadcn/ui |
 | Backend | Next.js API routes, Supabase (auth + Postgres + RLS) |
-| AI | OpenRouter (personalized daily habit tasks) |
+| AI | OpenRouter (personalized daily habit tasks), Suno for music |
 | Deployment | Vercel (frontend), GitHub Actions CI/CD, Supabase migrations |
 | Assets | Local pixel-art sprites in `/public` |
 
