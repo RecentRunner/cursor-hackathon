@@ -60,6 +60,14 @@ export function getCatalogEntry(habitId: string) {
   return habitCatalog.find((habit) => habit.id === habitId);
 }
 
+export function getCatalogIdByLabel(label: string) {
+  return habitCatalog.find((habit) => habit.label === label)?.id ?? null;
+}
+
+export function isCatalogLabel(label: string) {
+  return habitCatalog.some((habit) => habit.label === label);
+}
+
 export function matchesFocusTopics(
   entry: HabitCatalogEntry,
   preferences: ProfilePreferences,

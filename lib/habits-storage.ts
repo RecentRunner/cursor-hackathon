@@ -1,135 +1,314 @@
-import { catalogHabitIds, habitCatalog } from "@/lib/habit-catalog";
+import {
+  catalogHabitIds,
+  getCatalogEntry,
+  getCatalogIdByLabel,
+  isCatalogLabel,
+} from "@/lib/habit-catalog";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
+import { createClient } from "@/lib/supabase/client";
 
 export type Habit = {
   id: string;
   label: string;
+  catalogId: string | null;
   streak: number;
   lastCompletedDate: string | null;
   isCustom: boolean;
 };
 
-const STORAGE_KEY = "habit-pet-habits";
+type HabitRow = {
+  id: string;
+  name: string;
+};
 
-export const defaultHabits: Habit[] = habitCatalog.map((entry) => ({
-  id: entry.id,
-  label: entry.label,
-  streak: 0,
-  lastCompletedDate: null,
-  isCustom: false,
-}));
+type HabitLogRow = {
+  habit_id: string;
+  completed_on: string;
+};
 
 export function getTodayDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
-function getYesterdayDateKey(date = new Date()) {
-  const yesterday = new Date(date);
-  yesterday.setDate(yesterday.getDate() - 1);
-  return getTodayDateKey(yesterday);
+function calculateStreak(completedDates: string[], today = getTodayDateKey()) {
+  if (completedDates.length === 0) {
+    return 0;
+  }
+
+  const dates = new Set(completedDates);
+  let streak = 0;
+  const cursor = new Date(`${today}T00:00:00`);
+
+  if (!dates.has(today)) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  while (dates.has(getTodayDateKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
 }
 
-function normalizeHabit(habit: Partial<Habit> & { id: string; label: string }): Habit {
+function getLastCompletedDate(completedDates: string[], today = getTodayDateKey()) {
+  if (completedDates.includes(today)) {
+    return today;
+  }
+
+  const sortedDates = [...completedDates].sort().reverse();
+  return sortedDates[0] ?? null;
+}
+
+function mapHabitRow(
+  row: HabitRow,
+  logsByHabitId: Map<string, string[]>,
+  today = getTodayDateKey(),
+): Habit {
+  const completedDates = logsByHabitId.get(row.id) ?? [];
+
   return {
-    id: habit.id,
-    label: habit.label,
-    streak: habit.streak ?? 0,
-    lastCompletedDate: habit.lastCompletedDate ?? null,
-    isCustom: habit.isCustom ?? !catalogHabitIds.has(habit.id),
+    id: row.id,
+    label: row.name,
+    catalogId: getCatalogIdByLabel(row.name),
+    streak: calculateStreak(completedDates, today),
+    lastCompletedDate: getLastCompletedDate(completedDates, today),
+    isCustom: !isCatalogLabel(row.name),
   };
+}
+
+async function getAuthenticatedUserId() {
+  const supabase = createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return null;
+  }
+
+  return user.id;
+}
+
+async function fetchHabitLogs(userId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("habit_logs")
+    .select("habit_id, completed_on")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const logsByHabitId = new Map<string, string[]>();
+
+  for (const log of (data ?? []) as HabitLogRow[]) {
+    const existing = logsByHabitId.get(log.habit_id) ?? [];
+    existing.push(log.completed_on);
+    logsByHabitId.set(log.habit_id, existing);
+  }
+
+  return logsByHabitId;
 }
 
 export function isHabitCompletedToday(habit: Habit, today = getTodayDateKey()) {
   return habit.lastCompletedDate === today;
 }
 
-export function getHabits(): Habit[] {
-  if (typeof window === "undefined") {
-    return defaultHabits;
+export async function getHabits(): Promise<Habit[]> {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return [];
   }
 
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("habits")
+    .select("id, name")
+    .eq("user_id", userId)
+    .eq("active", true)
+    .order("created_at", { ascending: true });
 
-  if (!raw) {
-    return defaultHabits;
+  if (error) {
+    throw new Error(error.message);
   }
 
-  try {
-    const habits = (JSON.parse(raw) as Habit[]).map(normalizeHabit);
-    return habits.length > 0 ? habits : defaultHabits;
-  } catch {
-    return defaultHabits;
-  }
+  const logsByHabitId = await fetchHabitLogs(userId);
+
+  return ((data ?? []) as HabitRow[]).map((row) =>
+    mapHabitRow(row, logsByHabitId),
+  );
 }
 
-export function saveHabits(habits: Habit[], options?: { notify?: boolean }) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+export async function ensureCatalogHabit(catalogId: string): Promise<Habit | null> {
+  const entry = getCatalogEntry(catalogId);
 
-  if (options?.notify !== false) {
-    notifyHabitPetDataUpdated();
+  if (!entry) {
+    return null;
   }
+
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
+  const supabase = createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("habits")
+    .select("id, name")
+    .eq("user_id", userId)
+    .eq("name", entry.label)
+    .eq("active", true)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  let row = existing as HabitRow | null;
+
+  if (!row) {
+    const { data: inserted, error: insertError } = await supabase
+      .from("habits")
+      .insert({
+        user_id: userId,
+        name: entry.label,
+        active: true,
+      })
+      .select("id, name")
+      .single();
+
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
+
+    row = inserted as HabitRow;
+  }
+
+  const logsByHabitId = await fetchHabitLogs(userId);
+  return mapHabitRow(row, logsByHabitId);
 }
 
-export function toggleHabitCompletion(habitId: string): Habit[] {
+export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return [];
+  }
+
+  const supabase = createClient();
   const today = getTodayDateKey();
-  const yesterday = getYesterdayDateKey();
-  const habits = getHabits().map((habit) => {
-    if (habit.id !== habitId) {
-      return habit;
+  const { data: existingLog, error: existingLogError } = await supabase
+    .from("habit_logs")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("habit_id", habitId)
+    .eq("completed_on", today)
+    .maybeSingle();
+
+  if (existingLogError) {
+    throw new Error(existingLogError.message);
+  }
+
+  if (existingLog) {
+    const { error: deleteError } = await supabase
+      .from("habit_logs")
+      .delete()
+      .eq("id", existingLog.id);
+
+    if (deleteError) {
+      throw new Error(deleteError.message);
     }
+  } else {
+    const { error: insertError } = await supabase.from("habit_logs").insert({
+      user_id: userId,
+      habit_id: habitId,
+      completed_on: today,
+    });
 
-    if (isHabitCompletedToday(habit, today)) {
-      return {
-        ...habit,
-        lastCompletedDate: null,
-        streak: Math.max(0, habit.streak - 1),
-      };
+    if (insertError) {
+      throw new Error(insertError.message);
     }
+  }
 
-    const nextStreak =
-      habit.lastCompletedDate === yesterday ? habit.streak + 1 : 1;
-
-    return {
-      ...habit,
-      lastCompletedDate: today,
-      streak: nextStreak,
-    };
-  });
-
-  saveHabits(habits);
-  return habits;
+  notifyHabitPetDataUpdated();
+  return getHabits();
 }
 
-export function addHabit(label: string): Habit[] {
+export async function addHabit(label: string): Promise<Habit[]> {
   const trimmedLabel = label.trim();
 
   if (!trimmedLabel) {
     return getHabits();
   }
 
-  const habits = [
-    ...getHabits(),
-    normalizeHabit({
-      id: crypto.randomUUID(),
-      label: trimmedLabel,
-      streak: 0,
-      lastCompletedDate: null,
-      isCustom: true,
-    }),
-  ];
+  const userId = await getAuthenticatedUserId();
 
-  saveHabits(habits);
-  return habits;
+  if (!userId) {
+    return [];
+  }
+
+  const supabase = createClient();
+  const { error } = await supabase.from("habits").insert({
+    user_id: userId,
+    name: trimmedLabel,
+    active: true,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  notifyHabitPetDataUpdated();
+  return getHabits();
 }
 
-export function removeHabit(habitId: string): Habit[] {
-  const habits = getHabits().filter(
-    (habit) => habit.id !== habitId || !habit.isCustom,
-  );
-  saveHabits(habits);
-  return habits;
+export async function removeHabit(habitId: string): Promise<Habit[]> {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return [];
+  }
+
+  const supabase = createClient();
+  const { data: habit, error: habitError } = await supabase
+    .from("habits")
+    .select("id, name")
+    .eq("id", habitId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (habitError) {
+    throw new Error(habitError.message);
+  }
+
+  if (!habit || isCatalogLabel(habit.name)) {
+    return getHabits();
+  }
+
+  const { error: deleteError } = await supabase
+    .from("habits")
+    .delete()
+    .eq("id", habitId)
+    .eq("user_id", userId);
+
+  if (deleteError) {
+    throw new Error(deleteError.message);
+  }
+
+  notifyHabitPetDataUpdated();
+  return getHabits();
 }
 
-export function getCustomHabits() {
-  return getHabits().filter((habit) => habit.isCustom);
+export async function getCustomHabits() {
+  const habits = await getHabits();
+  return habits.filter((habit) => habit.isCustom);
+}
+
+export function isCatalogHabitId(habitId: string) {
+  return catalogHabitIds.has(habitId);
 }
