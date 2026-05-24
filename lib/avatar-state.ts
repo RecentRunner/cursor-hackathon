@@ -6,7 +6,6 @@ export type DailyQuizAnswers = {
   energy: number;
   sleepLength: number;
   sleepQuality: number;
-  journal: string;
 };
 
 export type AvatarCondition = {
@@ -29,7 +28,6 @@ export const defaultDailyQuizAnswers: DailyQuizAnswers = {
   energy: 3,
   sleepLength: 3,
   sleepQuality: 3,
-  journal: "",
 };
 
 export function computeAvatarCondition(
@@ -71,6 +69,7 @@ export const defaultAvatarCondition: AvatarCondition = {
 export function normalizeDailyQuizAnswers(
   answers: Partial<DailyQuizAnswers> & {
     mood?: number;
+    journal?: string;
   },
 ): DailyQuizAnswers {
   const scaleValue = (value: number | undefined, fallback: number) => {
@@ -92,6 +91,5 @@ export function normalizeDailyQuizAnswers(
       answers.sleepQuality,
       defaultDailyQuizAnswers.sleepQuality,
     ),
-    journal: answers.journal ?? "",
   };
 }

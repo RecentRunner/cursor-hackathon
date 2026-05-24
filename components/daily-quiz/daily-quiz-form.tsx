@@ -25,29 +25,45 @@ import {
   getTodayDateKey,
   saveDailyQuizSubmission,
 } from "@/lib/daily-quiz-storage";
+import {
+  getJournalEntryForToday,
+  saveJournalEntry,
+} from "@/lib/journal-storage";
 
 export function DailyQuizForm() {
   const [answers, setAnswers] = useState<DailyQuizAnswers>(
     defaultDailyQuizAnswers,
   );
+  const [journal, setJournal] = useState("");
   const [submission, setSubmission] = useState<DailyQuizSubmission | null>(
     null,
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const existingSubmission = getDailyQuizSubmission();
+    async function loadDailyCheckIn() {
+      const existingSubmission = getDailyQuizSubmission();
+      const existingJournal = await getJournalEntryForToday();
 
-    if (existingSubmission?.date === getTodayDateKey()) {
-      setSubmission(existingSubmission);
-      setAnswers(existingSubmission.answers);
+      if (existingSubmission?.date === getTodayDateKey()) {
+        setSubmission(existingSubmission);
+        setAnswers(existingSubmission.answers);
+      }
+
+      if (existingJournal) {
+        setJournal(existingJournal.content);
+      }
+
+      setIsReady(true);
     }
 
-    setIsReady(true);
+    void loadDailyCheckIn();
   }, []);
 
   const isCompleted = submission !== null;
-  const canSubmit = !isCompleted;
+  const canSubmit = !isCompleted && !isSubmitting;
 
   const updateAnswer = <K extends keyof DailyQuizAnswers>(
     key: K,
@@ -59,13 +75,27 @@ export function DailyQuizForm() {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) {
       return;
     }
 
-    const savedSubmission = saveDailyQuizSubmission(answers);
-    setSubmission(savedSubmission);
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const savedSubmission = saveDailyQuizSubmission(answers);
+      await saveJournalEntry(journal);
+      setSubmission(savedSubmission);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Could not save your daily check-in.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isReady) {
@@ -132,7 +162,9 @@ export function DailyQuizForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Daily journal</CardTitle>
-          <CardDescription>Write about your day.</CardDescription>
+          <CardDescription>
+            Write about your day. Saved separately from your quiz answers.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Label htmlFor="journal" className="sr-only">
@@ -140,14 +172,16 @@ export function DailyQuizForm() {
           </Label>
           <textarea
             id="journal"
-            value={answers.journal}
+            value={journal}
             disabled={isCompleted}
-            onChange={(event) => updateAnswer("journal", event.target.value)}
+            onChange={(event) => setJournal(event.target.value)}
             className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
             placeholder="Write about your day."
           />
         </CardContent>
       </Card>
+
+      {error ? <p className="text-sm text-red-500">{error}</p> : null}
 
       {isCompleted && submission ? (
         <Card>
@@ -177,7 +211,7 @@ export function DailyQuizForm() {
         </Card>
       ) : (
         <Button className="w-full" disabled={!canSubmit} onClick={handleSubmit}>
-          Complete daily quiz
+          {isSubmitting ? "Saving..." : "Complete daily quiz"}
         </Button>
       )}
     </div>
