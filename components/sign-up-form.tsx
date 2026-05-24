@@ -42,14 +42,19 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}${routes.onboardingQuiz}`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(routes.onboardingQuiz)}`,
         },
       });
       if (error) throw error;
+      if (data.session) {
+        router.push(routes.onboardingQuiz);
+        router.refresh();
+        return;
+      }
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
