@@ -27,7 +27,6 @@ import { getDailyReminderStatus } from "@/lib/daily-reminder-status";
 import { getTodayDateKey } from "@/lib/habits-storage";
 import {
   reminderDeliveryOptions,
-  usesInAppReminders,
   usesSystemReminders,
   type ReminderDeliveryMethod,
 } from "@/lib/reminder-delivery";

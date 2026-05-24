@@ -69,7 +69,7 @@ export function TintedSpriteIcon({
     return () => {
       cancelled = true;
     };
-  }, [src, color.h, color.s, color.l, skinColor?.h, skinColor?.s, skinColor?.l]);
+  }, [src, color.h, color.s, color.l, skinColor]);
 
   return (
     <canvas
