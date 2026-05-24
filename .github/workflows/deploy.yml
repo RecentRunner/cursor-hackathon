@@ -50,6 +50,8 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: supabase db push --linked --include-seed
 
+      # Sole production deploy path. vercel.json ignoreCommand skips Git-triggered
+      # Vercel builds so pushes do not produce a duplicate deployment.
       - name: Set up Vercel CLI
         run: npm install --global vercel@54.4.1
 

@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "echo 'Skipping Git integration build; production deploys via GitHub Actions after Supabase migrations.' && exit 0"
+}
