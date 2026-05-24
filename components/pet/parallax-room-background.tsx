@@ -14,8 +14,6 @@ type ParallaxRoomBackgroundProps = {
   interactive?: boolean;
 };
 
-const SCENE_IMAGE_PARALLAX_SPEED = 0.15;
-
 export function ParallaxRoomBackground({
   roomId,
   className,
@@ -24,9 +22,10 @@ export function ParallaxRoomBackground({
   const containerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const room = getRoomBackground(roomId);
+  const usesSceneImage = Boolean(room.sceneImage);
 
   useEffect(() => {
-    if (!interactive) {
+    if (!interactive || usesSceneImage) {
       return;
     }
 
@@ -46,24 +45,24 @@ export function ParallaxRoomBackground({
     return () => {
       container.removeEventListener("pointermove", handlePointerMove);
     };
-  }, [interactive]);
+  }, [interactive, usesSceneImage]);
 
   if (room.sceneImage) {
     return (
       <div
         ref={containerRef}
-        className={cn("absolute inset-0 z-0 overflow-hidden", className)}
+        className={cn(
+          "absolute inset-0 z-0 overflow-hidden",
+          room.previewClassName,
+          className,
+        )}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={room.sceneImage}
           alt=""
           aria-hidden
-          className="absolute inset-[-8%] size-[116%] max-w-none object-cover image-pixelated"
-          style={{
-            transform: `translate3d(${offset.x * SCENE_IMAGE_PARALLAX_SPEED * 10}px, ${offset.y * SCENE_IMAGE_PARALLAX_SPEED * 8}px, 0)`,
-            transition: "transform 0.15s steps(4)",
-          }}
+          className="absolute inset-0 size-full object-cover image-pixelated"
         />
       </div>
     );
