@@ -26,7 +26,7 @@ export function ParallaxRoomBackground({
         src={room.sceneImage}
         alt=""
         aria-hidden
-        className="absolute inset-0 size-full object-cover image-pixelated"
+        className="absolute inset-0 size-full object-cover object-bottom image-pixelated"
       />
     </div>
   );

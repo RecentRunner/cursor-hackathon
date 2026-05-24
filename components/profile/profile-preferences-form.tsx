@@ -24,8 +24,11 @@ import {
   requestNotificationPermission,
 } from "@/lib/daily-reminders";
 import { getDailyReminderStatus } from "@/lib/daily-reminder-status";
-import { getTodayDateKey } from "@/lib/habits-storage";
+import { adjustCoins } from "@/lib/avatar-progression-storage";
+import { notifyHabitPetDataUpdated } from "@/lib/app-events";
+import { DEMO_COINS_GRANT } from "@/lib/coins";
 import { resetTodaysDailyQuiz } from "@/lib/daily-quiz-storage";
+import { getTodayDateKey } from "@/lib/habits-storage";
 import {
   reminderDeliveryOptions,
   usesSystemReminders,
@@ -59,6 +62,8 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
   );
   const [quizResetMessage, setQuizResetMessage] = useState<string | null>(null);
   const [isResettingQuiz, setIsResettingQuiz] = useState(false);
+  const [coinsGrantMessage, setCoinsGrantMessage] = useState<string | null>(null);
+  const [isGrantingCoins, setIsGrantingCoins] = useState(false);
 
   useEffect(() => {
     setNotificationPermission(getNotificationPermissionState());
@@ -210,6 +215,28 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
     setNotificationMessage(
       "Test reminder sent in-app and through your browser notification center.",
     );
+  };
+
+  const handleGrantDemoCoins = async () => {
+    setCoinsGrantMessage(null);
+    setError(null);
+    setIsGrantingCoins(true);
+
+    try {
+      const nextBalance = await adjustCoins(DEMO_COINS_GRANT);
+      notifyHabitPetDataUpdated();
+      setCoinsGrantMessage(
+        `Added ${DEMO_COINS_GRANT} points. Your balance is now ${nextBalance}.`,
+      );
+    } catch (grantError) {
+      setError(
+        grantError instanceof Error
+          ? grantError.message
+          : "Could not add demo points.",
+      );
+    } finally {
+      setIsGrantingCoins(false);
+    }
   };
 
   const handleResetDailyQuiz = async () => {
@@ -399,8 +426,22 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
             Reset clears today&apos;s wellness quiz entry so you can complete it
-            again immediately.
+            again immediately. Demo points are for testing the shop only.
           </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isSaving || isGrantingCoins}
+            onClick={() => void handleGrantDemoCoins()}
+          >
+            {isGrantingCoins
+              ? "Adding points..."
+              : `Add ${DEMO_COINS_GRANT} free points`}
+          </Button>
+          {coinsGrantMessage ? (
+            <p className="text-xs text-emerald-600">{coinsGrantMessage}</p>
+          ) : null}
           <Button
             type="button"
             variant="outline"

@@ -109,9 +109,9 @@ export function AnimatedPetSprite({
       )}
       style={{
         left: `${position.x}%`,
-        top: `${position.y}%`,
-        transform: "translate(-50%, -100%)",
-        transition: "left 1.8s steps(10), top 1.8s steps(10)",
+        bottom: `${position.y}%`,
+        transform: "translateX(-50%)",
+        transition: "left 1.8s steps(10), bottom 1.8s steps(10)",
       }}
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}

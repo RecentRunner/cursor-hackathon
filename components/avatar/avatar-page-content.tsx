@@ -50,7 +50,16 @@ export function AvatarPageContent() {
   return (
     <div className="flex w-full flex-col">
       <div className="bit-home-pet-stage">
-        <PetHabitat customization={customization} fillViewport />
+        <PetHabitat
+          customization={customization}
+          fillViewport
+          nameEditable
+          onNameChange={(name) =>
+            setCustomization((current) =>
+              current ? { ...current, name } : current,
+            )
+          }
+        />
       </div>
 
       <section className="grid w-full gap-6 pt-6 lg:grid-cols-2 lg:items-start">
