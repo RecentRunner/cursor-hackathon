@@ -262,6 +262,19 @@
     @apply border-2 border-border bg-card px-2 py-1 font-pixel leading-snug text-card-foreground;
     box-shadow: var(--retro-shadow-sm);
   }
+
+  .shop-item-thumbnail {
+    background: hsl(var(--muted) / 0.22);
+  }
+
+  .shop-item-thumbnail-glow {
+    background: radial-gradient(
+      circle at 50% 58%,
+      hsl(52 55% 90% / 0.55) 0%,
+      hsl(48 30% 88% / 0.18) 45%,
+      transparent 72%
+    );
+  }
 }
 
 @keyframes emotion-pop {

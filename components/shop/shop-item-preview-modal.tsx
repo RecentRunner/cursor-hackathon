@@ -12,7 +12,7 @@ import {
   buildShopItemPreviewCustomization,
   getShopPreviewRoomId,
 } from "@/lib/shop-preview";
-import type { ShopItemRecord } from "@/lib/shop-catalog";
+import { getShopItemDisplayName, type ShopItemRecord } from "@/lib/shop-catalog";
 import { routes } from "@/lib/routes";
 
 type ShopItemPreviewModalProps = {
@@ -89,7 +89,7 @@ export function ShopItemPreviewModal({
             >
               Preview on your bit
             </p>
-            <p className="mt-1 truncate text-sm">{item.name}</p>
+            <p className="mt-1 truncate text-sm">{getShopItemDisplayName(item)}</p>
           </div>
           <Button
             type="button"

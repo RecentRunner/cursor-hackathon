@@ -22,6 +22,7 @@ import {
 } from "@/lib/shop-storage";
 import {
   getLayerLabel,
+  getShopItemDisplayName,
   type ShopItemRecord,
   type ShopLayerId,
 } from "@/lib/shop-catalog";
@@ -103,6 +104,8 @@ function ShopItemCard({
       ? null
       : getShopItemThumbnailColors(item, characterColors);
 
+  const displayName = getShopItemDisplayName(item);
+
   const actionLabel = (() => {
     if (isPending) {
       return owned ? "Updating..." : "Processing...";
@@ -123,27 +126,33 @@ function ShopItemCard({
     <Card className="flex h-full flex-col overflow-hidden">
       <CardContent className="flex h-full flex-col gap-3 p-3">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden border-2 border-border bg-zinc-950/80 p-1">
-            {room ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={item.image_path || room.sceneImage}
-                alt=""
-                className="size-full object-cover image-pixelated"
-              />
-            ) : thumbnailColors ? (
-              <TintedSpriteIcon
-                src={item.image_path}
-                color={thumbnailColors.color}
-                skinColor={thumbnailColors.skinColor}
-                size={32}
-              />
+          <div className="shop-item-thumbnail relative flex size-12 shrink-0 items-center justify-center overflow-hidden border-2 border-border p-1">
+            {thumbnailColors || room ? (
+              <div aria-hidden className="shop-item-thumbnail-glow pointer-events-none absolute inset-0" />
             ) : null}
+            <div className="relative z-10 flex size-full items-center justify-center">
+              {room ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.image_path || room.sceneImage}
+                  alt=""
+                  className="size-full object-cover image-pixelated"
+                />
+              ) : thumbnailColors ? (
+                <TintedSpriteIcon
+                  src={item.image_path}
+                  color={thumbnailColors.color}
+                  skinColor={thumbnailColors.skinColor}
+                  size={32}
+                  className="drop-shadow-[0_0_3px_hsl(52_55%_90%_/_0.85)]"
+                />
+              ) : null}
+            </div>
           </div>
 
           <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
             <p className="min-w-0 pt-1 text-sm font-medium leading-snug">
-              {item.name}
+              {displayName}
             </p>
             <ShopItemPriceBadge
               price={item.price}
@@ -249,7 +258,7 @@ export function ShopContent() {
     try {
       const item = await purchaseShopItem(itemId);
       await equipShopItem(itemId);
-      toast(`Purchased and equipped ${item.name}.`, "success");
+      toast(`Purchased and equipped ${getShopItemDisplayName(item)}.`, "success");
       await refreshShop();
     } catch (purchaseError) {
       toast(
@@ -274,10 +283,10 @@ export function ShopContent() {
 
       if (item.type !== "room" && isEquipped) {
         await unequipShopItem(item.id);
-        toast(`Unequipped ${item.name}.`, "default");
+        toast(`Unequipped ${getShopItemDisplayName(item)}.`, "default");
       } else if (!isEquipped) {
         await equipShopItem(item.id);
-        toast(`Equipped ${item.name}.`, "success");
+        toast(`Equipped ${getShopItemDisplayName(item)}.`, "success");
       }
 
       await refreshShop();

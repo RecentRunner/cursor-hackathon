@@ -19,25 +19,25 @@ export const ROOM_SCENE_IMAGE_PATH = (id: RoomBackgroundId) =>
 export const ROOM_BACKGROUNDS: RoomBackground[] = [
   {
     id: "room-1",
-    name: "Sunny Field",
+    name: "Plains",
     free: true,
     sceneImage: ROOM_SCENE_IMAGE_PATH("room-1"),
   },
   {
     id: "room-2",
-    name: "Golden Dusk",
+    name: "Sunset",
     free: true,
     sceneImage: ROOM_SCENE_IMAGE_PATH("room-2"),
   },
   {
     id: "room-3",
-    name: "Starlit Night",
+    name: "Forest",
     free: false,
     sceneImage: ROOM_SCENE_IMAGE_PATH("room-3"),
   },
   {
     id: "room-4",
-    name: "Mystic Forest",
+    name: "Night",
     free: false,
     sceneImage: ROOM_SCENE_IMAGE_PATH("room-4"),
   },
