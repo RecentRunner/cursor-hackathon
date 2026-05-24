@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -42,9 +43,15 @@ const reasonLabels = {
 
 function DailyTaskList({
   tasks,
+  getIsCompleted,
+  isPending,
+  getToggleError,
   onToggle,
 }: {
   tasks: DailyTask[];
+  getIsCompleted: (habit: DailyTask) => boolean;
+  isPending: (habitId: string) => boolean;
+  getToggleError: (habitId: string) => string | null;
   onToggle: (habitId: string) => void;
 }) {
   if (tasks.length === 0) {
@@ -57,8 +64,8 @@ function DailyTaskList({
   }
 
   const sortedTasks = [...tasks].sort((a, b) => {
-    const aCompleted = isHabitCompletedToday(a);
-    const bCompleted = isHabitCompletedToday(b);
+    const aCompleted = getIsCompleted(a);
+    const bCompleted = getIsCompleted(b);
 
     if (aCompleted === bCompleted) {
       return 0;
@@ -70,7 +77,9 @@ function DailyTaskList({
   return (
     <>
       {sortedTasks.map((habit) => {
-        const isCompleted = isHabitCompletedToday(habit);
+        const isCompleted = getIsCompleted(habit);
+        const pending = isPending(habit.id);
+        const toggleError = getToggleError(habit.id);
 
         return (
           <div
@@ -80,12 +89,23 @@ function DailyTaskList({
             }`}
           >
             <div className="flex min-w-0 items-start gap-3">
-              <Checkbox
-                id={habit.id}
-                checked={isCompleted}
-                onCheckedChange={() => onToggle(habit.id)}
-                className="mt-0.5"
-              />
+              <div className="mt-0.5 flex items-center gap-2">
+                <Checkbox
+                  id={habit.id}
+                  checked={isCompleted}
+                  disabled={pending}
+                  onCheckedChange={() => onToggle(habit.id)}
+                />
+                {pending ? (
+                  <>
+                    <Loader2
+                      aria-hidden="true"
+                      className="h-4 w-4 animate-spin text-muted-foreground"
+                    />
+                    <span className="sr-only">Saving habit completion</span>
+                  </>
+                ) : null}
+              </div>
               <div className="flex min-w-0 flex-col gap-2">
                 <Label htmlFor={habit.id} className="leading-snug">
                   {habit.label}
@@ -96,6 +116,9 @@ function DailyTaskList({
                 >
                   {reasonLabels[habit.reason]}
                 </Badge>
+                {toggleError ? (
+                  <p className="text-xs text-red-500">{toggleError}</p>
+                ) : null}
               </div>
             </div>
             <Badge variant="secondary" className="shrink-0">
@@ -157,6 +180,34 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [optimisticCompletion, setOptimisticCompletion] = useState<
+    Record<string, boolean>
+  >({});
+  const [pendingHabitIds, setPendingHabitIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [toggleErrors, setToggleErrors] = useState<Record<string, string>>({});
+
+  const getIsCompleted = useCallback(
+    (habit: DailyTask) => {
+      if (habit.id in optimisticCompletion) {
+        return optimisticCompletion[habit.id];
+      }
+
+      return isHabitCompletedToday(habit);
+    },
+    [optimisticCompletion],
+  );
+
+  const isPending = useCallback(
+    (habitId: string) => pendingHabitIds.has(habitId),
+    [pendingHabitIds],
+  );
+
+  const getToggleError = useCallback(
+    (habitId: string) => toggleErrors[habitId] ?? null,
+    [toggleErrors],
+  );
 
   const refresh = useCallback(async () => {
     try {
@@ -189,20 +240,62 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
     };
   }, [refresh]);
 
-  const handleToggle = async (habitId: string) => {
-    try {
-      setIsSaving(true);
-      setError(null);
-      await toggleHabitCompletion(habitId);
-    } catch (toggleError) {
-      setError(
-        toggleError instanceof Error
-          ? toggleError.message
-          : "Could not update habit.",
-      );
-    } finally {
-      setIsSaving(false);
+  const handleToggle = (habitId: string) => {
+    const habit = dailyTasks.find((task) => task.id === habitId);
+
+    if (!habit || pendingHabitIds.has(habitId)) {
+      return;
     }
+
+    const nextCompleted = !getIsCompleted(habit);
+
+    setOptimisticCompletion((current) => ({
+      ...current,
+      [habitId]: nextCompleted,
+    }));
+    setPendingHabitIds((current) => new Set(current).add(habitId));
+    setToggleErrors((current) => {
+      const next = { ...current };
+      delete next[habitId];
+      return next;
+    });
+
+    void (async () => {
+      try {
+        const updatedHabits = await toggleHabitCompletion(habitId);
+
+        setDailyTasks((current) =>
+          current.map((task) => {
+            const updated = updatedHabits.find((item) => item.id === task.id);
+            return updated ? { ...task, ...updated } : task;
+          }),
+        );
+        setOptimisticCompletion((current) => {
+          const next = { ...current };
+          delete next[habitId];
+          return next;
+        });
+      } catch (toggleError) {
+        setOptimisticCompletion((current) => {
+          const next = { ...current };
+          delete next[habitId];
+          return next;
+        });
+        setToggleErrors((current) => ({
+          ...current,
+          [habitId]:
+            toggleError instanceof Error
+              ? toggleError.message
+              : "Could not update habit.",
+        }));
+      } finally {
+        setPendingHabitIds((current) => {
+          const next = new Set(current);
+          next.delete(habitId);
+          return next;
+        });
+      }
+    })();
   };
 
   const handleAddHabit = async () => {
@@ -323,7 +416,13 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {error ? <p className="text-sm text-red-500">{error}</p> : null}
-        <DailyTaskList tasks={dailyTasks} onToggle={handleToggle} />
+        <DailyTaskList
+          tasks={dailyTasks}
+          getIsCompleted={getIsCompleted}
+          isPending={isPending}
+          getToggleError={getToggleError}
+          onToggle={handleToggle}
+        />
       </CardContent>
     </Card>
   );
