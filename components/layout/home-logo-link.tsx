@@ -5,13 +5,18 @@ import { cn } from "@/lib/utils";
 
 type HomeLogoLinkProps = {
   className?: string;
+  "aria-current"?: "page" | undefined;
 };
 
-export function HomeLogoLink({ className }: HomeLogoLinkProps) {
+export function HomeLogoLink({
+  className,
+  "aria-current": ariaCurrent,
+}: HomeLogoLinkProps) {
   return (
     <Link
       href={routes.avatar}
       aria-label="Go to home"
+      aria-current={ariaCurrent}
       className={cn(
         "group flex shrink-0 items-center justify-center border-2 border-border bg-card/80 p-2 shadow-[var(--retro-shadow-sm)] transition-transform hover:-translate-y-0.5 hover:border-primary/60",
         className,

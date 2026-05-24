@@ -4,6 +4,8 @@
 
 @layer base {
   :root {
+    --app-topbar-height: 3.5rem;
+    --app-nav-offset: var(--bottom-nav-height);
     --bottom-nav-height: 6rem;
     --background: 252 38% 10%;
     --foreground: 52 100% 88%;
@@ -168,7 +170,11 @@
 
 @layer utilities {
   .pb-nav {
-    padding-bottom: var(--bottom-nav-height);
+    padding-bottom: var(--app-nav-offset);
+  }
+
+  .pt-topbar {
+    padding-top: calc(var(--app-topbar-height) + env(safe-area-inset-top, 0px));
   }
 
   .image-pixelated {

@@ -3,9 +3,19 @@
 import { useEffect, useState } from "react";
 
 import { AppNav } from "@/components/layout/app-nav";
+import {
+  NavOffsetProvider,
+  useNavOffsetRef,
+} from "@/components/layout/nav-offset-provider";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import { getOnboardingStatusClient } from "@/lib/onboarding-status";
 import { createClient } from "@/lib/supabase/client";
+
+function MeasuredAppNav() {
+  const navRef = useNavOffsetRef();
+
+  return <AppNav ref={navRef} />;
+}
 
 export function GlobalBottomNav() {
   const [showNav, setShowNav] = useState(false);
@@ -43,9 +53,9 @@ export function GlobalBottomNav() {
     };
   }, []);
 
-  if (!showNav) {
-    return null;
-  }
-
-  return <AppNav />;
+  return (
+    <NavOffsetProvider enabled={showNav}>
+      {showNav ? <MeasuredAppNav /> : null}
+    </NavOffsetProvider>
+  );
 }
