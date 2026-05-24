@@ -105,7 +105,7 @@ export function ShopItemPreviewModal({
 
         <div className="p-4">
           <div className="tamagotchi-lcd relative aspect-[4/3] w-full overflow-hidden">
-            <ParallaxRoomBackground roomId={roomId} interactive={false} />
+            <ParallaxRoomBackground roomId={roomId} />
             <div className="relative z-10 flex h-full items-center justify-center">
               <CharacterLayerPreview
                 colors={previewCustomization.colors}

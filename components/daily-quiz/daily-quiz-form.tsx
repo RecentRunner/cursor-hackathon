@@ -1,9 +1,9 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-import { PixelAvatar } from "@/components/avatar/pixel-avatar";
 import { WellnessSlider } from "@/components/daily-quiz/wellness-slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,20 +21,16 @@ import {
   SLEEP_HOURS_MAX,
   SLEEP_HOURS_MIN,
   SLEEP_HOURS_STEP,
-  WELLNESS_SCALE_MAX,
   type DailyQuizAnswers,
   type DailyQuizSubmission,
 } from "@/lib/avatar-state";
-import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import {
   getCachedQuizTabData,
   prefetchQuizTabData,
 } from "@/lib/app-tab-data-cache";
-import {
-  getAvatarConditionForToday,
-  saveDailyEntry,
-} from "@/lib/daily-quiz-storage";
+import { saveDailyEntry } from "@/lib/daily-quiz-storage";
 import { JOURNAL_MAX_LENGTH } from "@/lib/journal-safety";
+import { routes } from "@/lib/routes";
 
 export function DailyQuizForm() {
   const cachedQuiz = getCachedQuizTabData();
@@ -48,9 +44,6 @@ export function DailyQuizForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(cachedQuiz !== null);
-  const [liveCondition, setLiveCondition] = useState(
-    cachedQuiz?.liveCondition ?? cachedQuiz?.submission?.condition ?? null,
-  );
 
   const applyQuizData = useCallback(
     (data: NonNullable<ReturnType<typeof getCachedQuizTabData>>) => {
@@ -58,18 +51,12 @@ export function DailyQuizForm() {
         setSubmission(data.submission);
         setAnswers(data.submission.answers);
         setJournal(data.submission.journal);
-        setLiveCondition(data.submission.condition);
       } else {
         setSubmission(null);
-        setLiveCondition(data.liveCondition);
       }
     },
     [],
   );
-
-  const refreshLiveCondition = useCallback(async () => {
-    setLiveCondition(await getAvatarConditionForToday());
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,18 +94,6 @@ export function DailyQuizForm() {
     };
   }, [applyQuizData]);
 
-  useEffect(() => {
-    const handleDataUpdated = () => {
-      void refreshLiveCondition();
-    };
-
-    window.addEventListener(HABIT_PET_DATA_UPDATED_EVENT, handleDataUpdated);
-
-    return () => {
-      window.removeEventListener(HABIT_PET_DATA_UPDATED_EVENT, handleDataUpdated);
-    };
-  }, [refreshLiveCondition]);
-
   const isCompleted = submission !== null;
   const canSubmit = !isCompleted && !isSubmitting;
 
@@ -143,7 +118,6 @@ export function DailyQuizForm() {
     try {
       const savedEntry = await saveDailyEntry(answers, journal);
       setSubmission(savedEntry);
-      setLiveCondition(savedEntry.condition);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -164,65 +138,32 @@ export function DailyQuizForm() {
   return (
     <div className="flex flex-col gap-6">
       {isCompleted && submission ? (
-        <>
-          <Card className="border-primary/40 bg-primary/10">
-            <CardContent className="flex items-start gap-4 pt-6">
-              <div className="rounded-full bg-primary/15 p-2.5">
-                <CheckCircle2
-                  aria-hidden="true"
-                  className="h-7 w-7 text-primary"
-                />
-              </div>
-              <div className="space-y-1">
-                <p className="text-lg font-semibold tracking-tight">
-                  Today&apos;s quiz is complete
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Your wellness check-in and journal are saved for today. You
-                  can review your answers below, and come back tomorrow for
-                  your next quiz.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Your pet today</CardTitle>
-              <CardDescription>
-                Based on your wellness check-in and completed habits today.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              <PixelAvatar
-                mood={(liveCondition ?? submission.condition).mood}
-                size="md"
+        <Card className="border-primary/40 bg-primary/10">
+          <CardContent className="flex items-start gap-4 pt-6">
+            <div className="rounded-full bg-primary/15 p-2.5">
+              <CheckCircle2
+                aria-hidden="true"
+                className="h-7 w-7 text-primary"
               />
-              <div className="grid w-full grid-cols-3 gap-2 text-center text-sm">
-                <div className="rounded-lg border bg-background px-3 py-2">
-                  <p className="text-muted-foreground">Mood</p>
-                  <p className="font-medium capitalize">
-                    {(liveCondition ?? submission.condition).mood}
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-background px-3 py-2">
-                  <p className="text-muted-foreground">Energy</p>
-                  <p className="font-medium">
-                    {(liveCondition ?? submission.condition).energy}/
-                    {WELLNESS_SCALE_MAX}
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-background px-3 py-2">
-                  <p className="text-muted-foreground">Health</p>
-                  <p className="font-medium">
-                    {(liveCondition ?? submission.condition).health}/
-                    {WELLNESS_SCALE_MAX}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </>
+            </div>
+            <div className="space-y-1">
+              <p className="text-lg font-semibold tracking-tight">
+                Today&apos;s quiz is complete
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Your answers are saved below. Come back tomorrow for your next
+                check-in. How you did today affects your pet. Spend time with{" "}
+                <Link
+                  href={routes.avatar}
+                  className="font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  your pet
+                </Link>{" "}
+                whenever you want to see how they are doing.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <div className="flex items-center justify-between">
           <Badge>Today&apos;s check-in</Badge>
@@ -230,14 +171,14 @@ export function DailyQuizForm() {
         </div>
       )}
 
-      <Card className={isCompleted ? "opacity-90" : undefined}>
+      <Card className={isCompleted ? "form-section-locked" : undefined}>
         <CardHeader>
           <CardTitle className="text-base">
             {isCompleted ? "Your answers today" : "Wellness"}
           </CardTitle>
           <CardDescription>
             {isCompleted
-              ? "These fields are locked until tomorrow's quiz."
+              ? "What you answered today."
               : "Rate your wellness from 1 to 5. Sleep length uses hours."}
           </CardDescription>
         </CardHeader>
@@ -284,12 +225,12 @@ export function DailyQuizForm() {
         </CardContent>
       </Card>
 
-      <Card className={isCompleted ? "opacity-90" : undefined}>
+      <Card className={isCompleted ? "form-section-locked" : undefined}>
         <CardHeader>
           <CardTitle className="text-base">Daily journal</CardTitle>
           <CardDescription>
             {isCompleted
-              ? "Your journal entry for today."
+              ? "What you wrote today."
               : "Write about your day."}
           </CardDescription>
         </CardHeader>
@@ -303,7 +244,7 @@ export function DailyQuizForm() {
             disabled={isCompleted}
             maxLength={JOURNAL_MAX_LENGTH}
             onChange={(event) => setJournal(event.target.value)}
-            className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+            className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring field-locked disabled:opacity-75"
             placeholder="Write about your day."
           />
           {!isCompleted ? (

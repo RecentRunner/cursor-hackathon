@@ -63,20 +63,9 @@ function DailyTaskList({
     );
   }
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    const aCompleted = getIsCompleted(a);
-    const bCompleted = getIsCompleted(b);
-
-    if (aCompleted === bCompleted) {
-      return 0;
-    }
-
-    return aCompleted ? 1 : -1;
-  });
-
   return (
     <>
-      {sortedTasks.map((habit) => {
+      {tasks.map((habit) => {
         const isCompleted = getIsCompleted(habit);
         const pending = isPending(habit.id);
         const toggleError = getToggleError(habit.id);

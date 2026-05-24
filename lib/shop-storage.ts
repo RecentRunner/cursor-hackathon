@@ -1,5 +1,6 @@
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
 import { getCoins } from "@/lib/avatar-progression-storage";
+import { normalizeRoomBackgroundId } from "@/lib/room-backgrounds";
 import { type ShopItemRecord } from "@/lib/shop-catalog";
 import { createClient } from "@/lib/supabase/client";
 
@@ -103,7 +104,7 @@ export async function getEquippedRoomBackground(): Promise<string> {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
-    return "room-day";
+    return "room-1";
   }
 
   const supabase = createClient();
@@ -115,13 +116,13 @@ export async function getEquippedRoomBackground(): Promise<string> {
 
   if (error) {
     if (/room_background/i.test(error.message)) {
-      return "room-day";
+      return "room-1";
     }
 
     throw new Error(error.message);
   }
 
-  return (data?.room_background as string | null) ?? "room-day";
+  return normalizeRoomBackgroundId(data?.room_background as string | null);
 }
 
 export async function equipShopItem(itemId: string) {

@@ -79,16 +79,12 @@ function ShopItemCard({
         <div className="flex min-w-0 items-start gap-3">
           <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden border-2 border-border bg-zinc-950/80 p-1">
             {room ? (
-              item.image_path ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.image_path}
-                  alt=""
-                  className="size-full object-cover image-pixelated"
-                />
-              ) : (
-                <div className={cn("size-full", room.previewClassName)} />
-              )
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={item.image_path || room.sceneImage}
+                alt=""
+                className="size-full object-cover image-pixelated"
+              />
             ) : (
               <TintedSpriteIcon
                 src={item.image_path}
@@ -141,7 +137,7 @@ export function ShopContent() {
   const [items, setItems] = useState<ShopItemRecord[]>([]);
   const [ownedItemIds, setOwnedItemIds] = useState<string[]>([]);
   const [equippedItems, setEquippedItems] = useState<string[]>([]);
-  const [equippedRoomBackground, setEquippedRoomBackground] = useState("room-day");
+  const [equippedRoomBackground, setEquippedRoomBackground] = useState("room-1");
   const [coins, setCoins] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
@@ -153,7 +149,7 @@ export function ShopContent() {
     setError(null);
 
     let nextEquippedItems: string[] = [];
-    let nextEquippedRoomBackground = "room-day";
+    let nextEquippedRoomBackground = "room-1";
 
     try {
       const inventory = await getShopInventory();

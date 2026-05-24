@@ -371,10 +371,7 @@ export function CharacterCreator({
       <div className="customize-body mt-4 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-5">
         <div className="flex min-h-full min-w-0 flex-col">
           <div className="tamagotchi-lcd tamagotchi-lcd-pet-match relative">
-            <ParallaxRoomBackground
-              roomId={displayCustomization.roomBackground}
-              interactive={false}
-            />
+            <ParallaxRoomBackground roomId={displayCustomization.roomBackground} />
             <div className="relative z-10 flex h-full items-center justify-center">
               <CharacterLayerPreview
                 colors={displayCustomization.colors}

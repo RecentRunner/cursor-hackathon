@@ -222,6 +222,28 @@
   .image-pixelated {
     image-rendering: pixelated;
   }
+
+  .field-locked {
+    @apply cursor-not-allowed border-border/60 bg-muted/70 text-muted-foreground opacity-75;
+  }
+
+  .form-section-locked {
+    @apply border-border/50 bg-muted/35;
+  }
+
+  .form-section-locked .field-locked,
+  .form-section-locked input:disabled,
+  .form-section-locked textarea:disabled {
+    @apply cursor-not-allowed opacity-75;
+  }
+
+  .form-section-locked input[type="range"]:disabled {
+    @apply opacity-50 grayscale;
+  }
+
+  .form-section-locked label {
+    @apply text-muted-foreground;
+  }
 }
 
 @keyframes pet-breathe {

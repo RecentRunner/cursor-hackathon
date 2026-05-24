@@ -227,7 +227,13 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" value={email ?? "Guest user"} readOnly />
+            <Input
+              id="email"
+              value={email ?? "Guest user"}
+              readOnly
+              disabled
+              className="field-locked"
+            />
           </div>
         </CardContent>
       </Card>

@@ -10,7 +10,7 @@ export function AppPageHeader({
   eyebrow,
 }: AppPageHeaderProps) {
   return (
-    <header className="mb-6 border-b-2 border-border bg-card/60 px-1 pb-5 shadow-[var(--retro-shadow-sm)]">
+    <header className="mb-6 border-b-2 border-border pb-5">
       {eyebrow ? (
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
           {eyebrow}

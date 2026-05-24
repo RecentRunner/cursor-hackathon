@@ -9,7 +9,7 @@ type AppShellProps = {
   wide?: boolean;
   /** Use remaining viewport height between top bar and bottom nav. */
   fillViewport?: boolean;
-  /** Center page content horizontally (pairs well with fillViewport). */
+  /** Center page body horizontally (header stays left-aligned in the content column). */
   centered?: boolean;
 };
 
@@ -27,7 +27,7 @@ export function AppShell({
   centered = false,
 }: AppShellProps) {
   return (
-    <div className="relative flex min-h-dvh flex-col bg-background bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/0.12)_0%,transparent_45%),radial-gradient(circle_at_80%_100%,hsl(var(--secondary)/0.1)_0%,transparent_40%)] pt-topbar">
+    <div className="relative flex min-h-dvh flex-col bg-background pt-topbar">
       <AppTopBar />
       <main
         className={cn(
@@ -35,9 +35,7 @@ export function AppShell({
           fillViewport
             ? "min-h-[calc(100dvh-var(--app-topbar-height)-var(--app-nav-offset)-env(safe-area-inset-top,0px))]"
             : null,
-          centered ? "items-center" : null,
           wide ? contentWidthClass.wide : contentWidthClass.default,
-          fillViewport && "max-w-none lg:max-w-none",
         )}
       >
         {title ? (
@@ -46,6 +44,7 @@ export function AppShell({
         <div
           className={cn(
             fillViewport ? "pet-viewport-stage flex w-full flex-1 flex-col" : "contents",
+            centered ? "items-center" : null,
           )}
         >
           {children}
