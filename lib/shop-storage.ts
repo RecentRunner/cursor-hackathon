@@ -1,9 +1,6 @@
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
-import { adjustCoins, getCoins } from "@/lib/avatar-progression-storage";
-import {
-  parseVariantId,
-  type ShopItemRecord,
-} from "@/lib/shop-catalog";
+import { getCoins } from "@/lib/avatar-progression-storage";
+import { type ShopItemRecord } from "@/lib/shop-catalog";
 import { createClient } from "@/lib/supabase/client";
 
 async function getAuthenticatedUserId() {
@@ -83,48 +80,22 @@ export async function purchaseShopItem(itemId: string) {
   }
 
   const supabase = createClient();
-  const { data: item, error: itemError } = await supabase
-    .from("shop_items")
-    .select("id, name, type, price, image_path")
-    .eq("id", itemId)
-    .maybeSingle();
-
-  if (itemError) {
-    throw new Error(itemError.message);
-  }
-
-  if (!item) {
-    throw new Error("That shop item is no longer available.");
-  }
-
-  const owned = await getOwnedItemIds();
-
-  if (owned.includes(itemId)) {
-    throw new Error("You already own this item.");
-  }
-
-  const coins = await getCoins();
-
-  if (coins < item.price) {
-    throw new Error("Not enough points for this purchase.");
-  }
-
-  await adjustCoins(-item.price);
-
-  const { error: purchaseError } = await supabase.from("user_items").insert({
-    user_id: userId,
-    item_id: itemId,
+  const { data, error } = await supabase.rpc("purchase_shop_item", {
+    p_item_id: itemId,
   });
 
-  if (purchaseError) {
-    await adjustCoins(item.price);
-    throw new Error(purchaseError.message);
+  if (error) {
+    throw new Error(error.message);
   }
 
   notifyHabitPetDataUpdated();
+
   return {
-    ...(item as ShopItemRecord),
-    type: item.type as ShopItemRecord["type"],
+    id: data.item_id as string,
+    name: data.name as string,
+    type: data.type as ShopItemRecord["type"],
+    price: data.price as number,
+    image_path: data.image_path as string,
   };
 }
 
@@ -160,78 +131,17 @@ export async function equipShopItem(itemId: string) {
     throw new Error("You must be signed in to equip items.");
   }
 
-  const owned = await getOwnedItemIds();
-
-  if (!owned.includes(itemId)) {
-    throw new Error("Purchase this item before equipping it.");
-  }
-
   const supabase = createClient();
-  const { data: item, error: itemError } = await supabase
-    .from("shop_items")
-    .select("id, type")
-    .eq("id", itemId)
-    .maybeSingle();
-
-  if (itemError || !item) {
-    throw new Error("Could not find that shop item.");
-  }
-
-  if (item.type === "room") {
-    const { error } = await supabase
-      .from("avatar_state")
-      .update({
-        room_background: itemId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId);
-
-    if (error) {
-      if (/room_background/i.test(error.message)) {
-        notifyHabitPetDataUpdated();
-        return [itemId];
-      }
-
-      throw new Error(error.message);
-    }
-
-    notifyHabitPetDataUpdated();
-    return [itemId];
-  }
-
-  const current = await getEquippedItems();
-  const nextStyle = parseVariantId(itemId);
-
-  const withoutSameLayer = current.filter((equippedId) => {
-    if (equippedId === itemId) {
-      return false;
-    }
-
-    const equippedStyle = parseVariantId(equippedId);
-
-    if (!nextStyle || !equippedStyle) {
-      return true;
-    }
-
-    return equippedStyle.layerId !== nextStyle.layerId;
+  const { error } = await supabase.rpc("equip_shop_item", {
+    p_item_id: itemId,
   });
-  const next = [...withoutSameLayer, itemId];
-
-  const { error } = await supabase
-    .from("avatar_state")
-    .update({
-      equipped_items: next,
-      equipped_item: itemId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId);
 
   if (error) {
     throw new Error(error.message);
   }
 
   notifyHabitPetDataUpdated();
-  return next;
+  return getEquippedItems();
 }
 
 export async function unequipShopItem(itemId: string) {
@@ -241,25 +151,17 @@ export async function unequipShopItem(itemId: string) {
     throw new Error("You must be signed in to unequip items.");
   }
 
-  const current = await getEquippedItems();
-  const next = current.filter((id) => id !== itemId);
-
   const supabase = createClient();
-  const { error } = await supabase
-    .from("avatar_state")
-    .update({
-      equipped_items: next,
-      equipped_item: next[0] ?? "none",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId);
+  const { error } = await supabase.rpc("unequip_shop_item", {
+    p_item_id: itemId,
+  });
 
   if (error) {
     throw new Error(error.message);
   }
 
   notifyHabitPetDataUpdated();
-  return next;
+  return getEquippedItems();
 }
 
 export async function getShopInventory() {

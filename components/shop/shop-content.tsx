@@ -147,7 +147,8 @@ export function ShopContent() {
 
     try {
       const item = await purchaseShopItem(itemId);
-      toast(`Purchased ${item.name}.`, "success");
+      await equipShopItem(itemId);
+      toast(`Purchased and equipped ${item.name}.`, "success");
       await refreshShop();
     } catch (purchaseError) {
       toast(
