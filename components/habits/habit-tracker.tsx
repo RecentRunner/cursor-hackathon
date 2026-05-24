@@ -38,8 +38,7 @@ type HabitTrackerProps = {
 
 const reasonLabels = {
   custom: "Custom",
-  focus: "Your focus",
-  quiz: "Today's quiz",
+  suggested: "Suggested for you",
 } as const;
 
 function DailyTaskList({
@@ -58,8 +57,8 @@ function DailyTaskList({
   if (tasks.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No daily tasks yet. Set focus topics in Profile or complete the daily
-        quiz to personalize your list.
+        No daily tasks yet. Complete your daily quiz or update your profile so
+        AI can suggest habits for you.
       </p>
     );
   }
@@ -111,12 +110,22 @@ function DailyTaskList({
                 <Label htmlFor={habit.id} className="leading-snug">
                   {habit.label}
                 </Label>
-                <Badge
-                  variant="outline"
-                  className="w-fit px-2.5 py-0.5 text-[11px] font-normal"
-                >
-                  {reasonLabels[habit.reason]}
-                </Badge>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge
+                    variant="outline"
+                    className="w-fit px-2.5 py-0.5 text-[11px] font-normal"
+                  >
+                    {reasonLabels[habit.reason]}
+                  </Badge>
+                  {habit.reason === "suggested" ? (
+                    <Badge
+                      variant="secondary"
+                      className="w-fit px-2.5 py-0.5 text-[11px] font-normal"
+                    >
+                      by AI
+                    </Badge>
+                  ) : null}
+                </div>
                 {toggleError ? (
                   <p className="text-xs text-red-500">{toggleError}</p>
                 ) : null}
@@ -351,7 +360,9 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-sm text-muted-foreground">Loading habits...</p>
+          <p className="text-sm text-muted-foreground">
+            Loading and personalizing your tasks...
+          </p>
         </CardContent>
       </Card>
     );
@@ -400,8 +411,8 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
           <CardHeader>
             <CardTitle className="text-base">How daily tasks are picked</CardTitle>
             <CardDescription>
-              Your tasks combine focus preferences, custom habits, and today&apos;s
-              quiz.
+              Your tasks combine custom habits and AI suggestions based on your
+              profile, onboarding, daily quiz, and journal.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -414,8 +425,8 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
               {quizCompletedToday ? "Completed" : "Not completed yet"}
             </p>
             <p>
-              Suggested habits can appear when your quiz shows low energy, high
-              stress, or poor sleep.
+              Suggested tasks are generated daily from your preferences, onboarding
+              answers, wellness check-in, and journal.
             </p>
           </CardContent>
         </Card>
@@ -428,8 +439,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       <CardHeader>
         <CardTitle className="text-base">Today&apos;s tasks</CardTitle>
         <CardDescription>
-          Personalized from your focus topics
-          {quizCompletedToday ? ", today's quiz," : ""} and custom habits.
+          Personalized from your profile, daily quiz, journal, and custom habits.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

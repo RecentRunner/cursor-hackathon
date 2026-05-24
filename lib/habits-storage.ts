@@ -4,6 +4,10 @@ import {
   getCatalogIdByLabel,
   isCatalogLabel,
 } from "@/lib/habit-catalog";
+import {
+  displayHabitName,
+  isAiGeneratedHabitName,
+} from "@/lib/ai-habit-utils";
 import { adjustCoins } from "@/lib/avatar-progression-storage";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
 import {
@@ -20,6 +24,7 @@ export type Habit = {
   streak: number;
   lastCompletedDate: string | null;
   isCustom: boolean;
+  isAiGenerated: boolean;
 };
 
 export type ToggleHabitResult = {
@@ -61,13 +66,17 @@ function shouldResetStreakForMissedDay(
 }
 
 function mapHabitRow(row: HabitRow): Habit {
+  const displayName = displayHabitName(row.name);
+  const isAiGenerated = isAiGeneratedHabitName(row.name);
+
   return {
     id: row.id,
-    label: row.name,
-    catalogId: getCatalogIdByLabel(row.name),
+    label: displayName,
+    catalogId: isAiGenerated ? null : getCatalogIdByLabel(displayName),
     streak: row.streak ?? 0,
     lastCompletedDate: row.last_completed_on ?? null,
-    isCustom: !isCatalogLabel(row.name),
+    isCustom: !isAiGenerated && !isCatalogLabel(displayName),
+    isAiGenerated,
   };
 }
 
@@ -414,7 +423,7 @@ export async function removeHabit(habitId: string): Promise<Habit[]> {
     throw new Error(habitError.message);
   }
 
-  if (!habit || isCatalogLabel(habit.name)) {
+  if (!habit || isCatalogLabel(habit.name) || isAiGeneratedHabitName(habit.name)) {
     return getHabits();
   }
 

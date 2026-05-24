@@ -7,7 +7,7 @@ export default function AvatarPage() {
   return (
     <AppShell
       title="Your Habit Pet"
-      description="Today's tasks are personalized from your preferences and daily quiz."
+      description="Today's tasks are personalized by AI from your quiz, journal, and preferences."
     >
       <div className="flex flex-col gap-6">
         <AvatarStatusCard />
