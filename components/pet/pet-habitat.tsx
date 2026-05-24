@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AnimatedPetSprite } from "@/components/pet/animated-pet-sprite";
+import { EditablePetName } from "@/components/pet/editable-pet-name";
+import { PetGroundZone } from "@/components/pet/pet-ground-zone";
 import { PetEmotionCaption } from "@/components/pet/pet-emotion-caption";
 import { ParallaxRoomBackground } from "@/components/pet/parallax-room-background";
 import { PixelGauge } from "@/components/pet/pixel-gauge";
@@ -26,6 +28,8 @@ type PetHabitatProps = {
   fillViewport?: boolean;
   /** Bit name in the LCD top-right (landing preview). */
   nameInLcd?: boolean;
+  nameEditable?: boolean;
+  onNameChange?: (name: string) => void;
   petScale?: number;
   lcdClassName?: string;
   lcdRef?: React.Ref<HTMLDivElement>;
@@ -36,6 +40,8 @@ export function PetHabitat({
   className,
   fillViewport = false,
   nameInLcd = false,
+  nameEditable = false,
+  onNameChange,
   petScale,
   lcdClassName: lcdClassNameOverride,
   lcdRef,
@@ -104,8 +110,10 @@ export function PetHabitat({
   );
 
   const gaugeOverlaySize = fillViewport ? "responsive" : "md";
-  const showNameAboveShell = !fillViewport && !nameInLcd;
-  const showNameInLcdOverlay = fillViewport || nameInLcd;
+  const showStaticNameAboveShell = !nameEditable && !fillViewport && !nameInLcd;
+  const showFloatingEditableName = nameEditable && (fillViewport || !nameInLcd);
+  const showReadOnlyLcdName =
+    !nameEditable && (fillViewport || nameInLcd);
 
   if (!isReady) {
     return (
@@ -119,7 +127,7 @@ export function PetHabitat({
 
   return (
     <div className={shellClassName}>
-      {showNameAboveShell ? (
+      {showStaticNameAboveShell ? (
         <div className="mb-3 shrink-0 border-b-2 border-border/60 pb-3">
           <p className="text-sm text-foreground">{customization.name}</p>
         </div>
@@ -127,14 +135,16 @@ export function PetHabitat({
 
       <div ref={lcdRef} className={lcdClassName}>
         <ParallaxRoomBackground roomId={roomId as RoomBackgroundId} />
-        <AnimatedPetSprite
-          customization={customization}
-          petScale={petScale}
-          interactive={interactive}
-          emotionVisible={emotionVisible}
-          mood={condition.mood}
-          onInteract={showEmotionBriefly}
-        />
+        <PetGroundZone>
+          <AnimatedPetSprite
+            customization={customization}
+            petScale={petScale}
+            interactive={interactive}
+            emotionVisible={emotionVisible}
+            mood={condition.mood}
+            onInteract={showEmotionBriefly}
+          />
+        </PetGroundZone>
         <PetEmotionCaption mood={condition.mood} visible={emotionVisible} />
         <div className="pointer-events-none absolute left-2 top-2 z-20 grid gap-1 sm:gap-1.5">
           <PixelGauge
@@ -150,7 +160,15 @@ export function PetHabitat({
             overlaySize={gaugeOverlaySize}
           />
         </div>
-        {showNameInLcdOverlay ? (
+        {showFloatingEditableName ? (
+          <EditablePetName
+            name={customization.name}
+            onNameChange={onNameChange}
+            variant="overlay"
+            size={fillViewport ? "default" : "landing"}
+          />
+        ) : null}
+        {showReadOnlyLcdName ? (
           <p
             className={cn(
               "pointer-events-none absolute right-2 top-2 z-20 max-w-[52%] truncate text-right lcd-readable-name",

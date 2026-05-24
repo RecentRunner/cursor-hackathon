@@ -1,5 +1,8 @@
 export const DEFAULT_STARTING_COINS = 100;
 
+/** Demo grant amount from Profile → Demo tools. */
+export const DEMO_COINS_GRANT = 100;
+
 export const COINS_PER_TASK_COMPLETE = 50;
 export const COINS_PER_TASK_UNCHECK = -50;
 
