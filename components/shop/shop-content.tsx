@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast-provider";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
+import { getAvatarCustomization } from "@/lib/avatar-customization-storage";
+import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
 import { DEFAULT_GRAY_COLOR } from "@/lib/character/presets";
-import { getRoomBackground } from "@/lib/room-backgrounds";
+import { getRoomBackground, normalizeRoomBackgroundId } from "@/lib/room-backgrounds";
 import {
   equipShopItem,
   getShopInventory,
@@ -22,6 +24,8 @@ import {
   type ShopLayerId,
 } from "@/lib/shop-catalog";
 import { cn } from "@/lib/utils";
+
+import { ShopItemPreviewModal } from "@/components/shop/shop-item-preview-modal";
 
 const SHOP_LAYER_ORDER: ShopLayerId[] = [
   "head",
@@ -39,6 +43,7 @@ function ShopItemCard({
   isPending,
   onPurchase,
   onEquipToggle,
+  onPreview,
 }: {
   item: ShopItemRecord;
   owned: boolean;
@@ -47,6 +52,7 @@ function ShopItemCard({
   isPending: boolean;
   onPurchase: () => void;
   onEquipToggle: () => void;
+  onPreview: () => void;
 }) {
   const room = item.type === "room" ? getRoomBackground(item.id) : null;
 
@@ -101,16 +107,29 @@ function ShopItemCard({
           </div>
         </div>
 
-        <Button
-          className="mt-auto h-auto min-h-9 w-full whitespace-normal px-2 py-2 text-center text-[10px] leading-snug"
-          variant={owned && equipped ? "default" : "outline"}
-          disabled={
-            isPending || (!owned && !canAfford) || (owned && item.type === "room" && equipped)
-          }
-          onClick={owned ? onEquipToggle : onPurchase}
-        >
-          {actionLabel}
-        </Button>
+        <div className="mt-auto grid grid-cols-2 gap-2">
+          <Button
+            type="button"
+            className="h-auto min-h-9 whitespace-normal px-2 py-2 text-[10px] leading-snug"
+            variant="outline"
+            disabled={isPending}
+            onClick={onPreview}
+          >
+            Preview
+          </Button>
+          <Button
+            className="h-auto min-h-9 whitespace-normal px-2 py-2 text-[10px] leading-snug"
+            variant={owned && equipped ? "default" : "outline"}
+            disabled={
+              isPending ||
+              (!owned && !canAfford) ||
+              (owned && item.type === "room" && equipped)
+            }
+            onClick={owned ? onEquipToggle : onPurchase}
+          >
+            {actionLabel}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -125,16 +144,27 @@ export function ShopContent() {
   const [coins, setCoins] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
+  const [baseCustomization, setBaseCustomization] =
+    useState<AvatarCustomization | null>(null);
+  const [previewItem, setPreviewItem] = useState<ShopItemRecord | null>(null);
 
   const refreshShop = useCallback(async () => {
     try {
       setError(null);
-      const inventory = await getShopInventory();
+      const [inventory, customization] = await Promise.all([
+        getShopInventory(),
+        getAvatarCustomization(),
+      ]);
       setItems(inventory.items);
       setOwnedItemIds(inventory.ownedItemIds);
       setEquippedItems(inventory.equippedItems);
       setEquippedRoomBackground(inventory.equippedRoomBackground);
       setCoins(inventory.coins);
+      setBaseCustomization({
+        ...customization,
+        equippedItems: inventory.equippedItems,
+        roomBackground: normalizeRoomBackgroundId(inventory.equippedRoomBackground),
+      });
     } catch (refreshError) {
       setError(
         refreshError instanceof Error
@@ -214,6 +244,12 @@ export function ShopContent() {
 
   return (
     <>
+      <ShopItemPreviewModal
+        item={previewItem}
+        baseCustomization={baseCustomization}
+        onClose={() => setPreviewItem(null)}
+      />
+
       <div className="mb-5 flex items-center justify-between gap-3 border-2 border-border bg-muted/40 px-4 py-3 shadow-[var(--retro-shadow-sm)]">
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Your balance
@@ -253,6 +289,7 @@ export function ShopContent() {
                   isPending={pendingItemId === item.id}
                   onPurchase={() => void handlePurchase(item.id)}
                   onEquipToggle={() => void handleEquipToggle(item)}
+                  onPreview={() => setPreviewItem(item)}
                 />
               ))}
             </div>
@@ -275,6 +312,7 @@ export function ShopContent() {
                   isPending={pendingItemId === item.id}
                   onPurchase={() => void handlePurchase(item.id)}
                   onEquipToggle={() => void handleEquipToggle(item)}
+                  onPreview={() => setPreviewItem(item)}
                 />
               ))}
             </div>
