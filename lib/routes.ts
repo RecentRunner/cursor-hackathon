@@ -8,6 +8,7 @@ export const routes = {
   avatar: "/avatar",
   customize: "/customize",
   habits: "/habits",
+  dailyCheckIn: "/daily/check-in",
   dailyQuiz: "/daily/quiz",
   shop: "/shop",
   profile: "/profile",

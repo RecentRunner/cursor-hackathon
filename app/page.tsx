@@ -21,7 +21,7 @@ export default function Home() {
             </h1>
             <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
               HaBit turns daily check-ins, wellness sliders, and journaling into
-              a simple game. Keep streaks alive, take your once-per-day quiz,
+              a simple game. Keep streaks alive, take your once-per-day check-in,
               and watch your bit change with you.
             </p>
             <Suspense fallback={null}>
@@ -35,7 +35,7 @@ export default function Home() {
               <div className="space-y-2 text-center">
                 <p className="text-sm font-medium">Your daily loop</p>
                 <p className="text-sm text-muted-foreground">
-                  Habits, wellness, journal, quiz, shop.
+                  Habits, wellness, journal, check-in, shop.
                 </p>
               </div>
             </CardContent>

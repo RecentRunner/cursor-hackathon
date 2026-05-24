@@ -57,7 +57,7 @@ function DailyTaskList({
   if (tasks.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No daily tasks yet. Complete your daily quiz or update your profile so
+        No daily tasks yet. Complete your daily check-in or update your profile so
         AI can suggest habits for you.
       </p>
     );
@@ -428,7 +428,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
             <CardTitle className="text-base">Today&apos;s tasks</CardTitle>
             <CardDescription>
               Personalized from your focus topics
-              {quizCompletedToday ? ", today's quiz," : ""} and custom habits.
+              {quizCompletedToday ? ", today's check-in," : ""} and custom habits.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -485,17 +485,17 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
             <CardTitle className="text-base">How daily tasks are picked</CardTitle>
             <CardDescription>
               Your tasks combine focus preferences, custom habits, and today&apos;s
-              quiz.
+              check-in.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>Focus topics: {focusTopic ?? "None selected"}</p>
             <p>
-              Daily quiz today:{" "}
+              Daily check-in today:{" "}
               {quizCompletedToday ? "Completed" : "Not completed yet"}
             </p>
             <p>
-              Suggested habits can appear when your quiz shows low energy, high
+              Suggested habits can appear when your check-in shows low energy, high
               stress, or poor sleep.
             </p>
           </CardContent>
@@ -548,7 +548,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
             <CardTitle className="text-base">How daily tasks are picked</CardTitle>
             <CardDescription>
               Your tasks combine custom habits and AI suggestions based on your
-              profile, onboarding, daily quiz, and journal.
+              profile, onboarding, daily check-in, and journal.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -557,7 +557,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
               {focusTopic ?? "None selected"}
             </p>
             <p>
-              Daily quiz today:{" "}
+              Daily check-in today:{" "}
               {quizCompletedToday ? "Completed" : "Not completed yet"}
             </p>
             <p>
@@ -575,7 +575,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       <CardHeader>
         <CardTitle className="text-base">Today&apos;s tasks</CardTitle>
         <CardDescription>
-          Personalized from your profile, daily quiz, journal, and custom habits.
+          Personalized from your profile, daily check-in, journal, and custom habits.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
