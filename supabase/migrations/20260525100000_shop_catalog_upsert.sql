@@ -1,4 +1,4 @@
--- Character layer styles sold in the shop (id = variant id, type = layer id).
+-- Idempotent shop catalog. Fixes empty shop when seed did not run.
 
 delete from public.user_items
 where item_id in ('hat_blue', 'glasses_round', 'room_sunset', 'room-space', 'room-neon');
