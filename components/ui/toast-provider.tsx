@@ -45,13 +45,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed bottom-24 right-4 z-50 flex w-[min(100vw-2rem,20rem)] flex-col gap-2"
+        className="pointer-events-none fixed right-4 z-50 flex w-[min(100vw-2rem,20rem)] flex-col gap-2"
+        style={{ bottom: "calc(var(--bottom-nav-height) + 0.75rem)" }}
       >
         {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
-              "rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm",
+              "rounded-lg border px-4 py-3 text-xs shadow-lg backdrop-blur-sm",
               message.variant === "success" &&
                 "border-emerald-500/30 bg-emerald-500/15 text-emerald-100",
               message.variant === "error" &&

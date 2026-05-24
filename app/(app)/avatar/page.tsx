@@ -7,7 +7,7 @@ export default function AvatarPage() {
   return (
     <AppShell
       title="Your Habit Pet"
-      description="Customize your pet, complete AI-personalized daily tasks, and track their mood from your wellness check-in."
+      description="Watch your pet roam, breathe, and react to how you care for them."
     >
       <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
         <AvatarPageContent />

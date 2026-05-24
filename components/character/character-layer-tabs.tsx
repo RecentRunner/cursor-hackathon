@@ -1,38 +1,41 @@
 "use client";
 
-import { CHARACTER_LAYERS, type CharacterLayerId } from "@/lib/character/presets";
+import {
+  CHARACTER_CUSTOMIZATION_TABS,
+  type CharacterCreatorTabId,
+} from "@/lib/character/presets";
 import { cn } from "@/lib/utils";
 
 type CharacterLayerTabsProps = {
-  activeLayerId: CharacterLayerId;
-  onLayerChange: (layerId: CharacterLayerId) => void;
+  activeTabId: CharacterCreatorTabId;
+  onTabChange: (tabId: CharacterCreatorTabId) => void;
 };
 
 export function CharacterLayerTabs({
-  activeLayerId,
-  onLayerChange,
+  activeTabId,
+  onTabChange,
 }: CharacterLayerTabsProps) {
   return (
     <div
       role="tablist"
-      aria-label="Character layers"
-      className="flex gap-0.5 overflow-x-auto rounded-lg border bg-muted/30 p-1"
+      aria-label="Character customization"
+      className="grid grid-cols-7 gap-0.5 border-2 border-border bg-muted/30 p-0.5"
     >
-      {CHARACTER_LAYERS.map((layer) => (
+      {CHARACTER_CUSTOMIZATION_TABS.map((tab) => (
         <button
-          key={layer.id}
+          key={tab.id}
           type="button"
           role="tab"
-          aria-selected={activeLayerId === layer.id}
-          onClick={() => onLayerChange(layer.id)}
+          aria-selected={activeTabId === tab.id}
+          onClick={() => onTabChange(tab.id)}
           className={cn(
-            "min-w-[4.5rem] flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            activeLayerId === layer.id
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
+            "min-w-0 truncate border-2 px-0.5 py-1.5 text-[7px] font-medium uppercase leading-tight tracking-wide transition-colors sm:px-1 sm:text-[8px]",
+            activeTabId === tab.id
+              ? "border-secondary bg-background text-foreground shadow-[var(--retro-shadow-sm)]"
+              : "border-transparent text-muted-foreground hover:border-border/60 hover:text-foreground",
           )}
         >
-          {layer.label}
+          {tab.label}
         </button>
       ))}
     </div>

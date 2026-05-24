@@ -48,8 +48,7 @@ export function OnboardingQuizForm() {
   };
 
   return (
-    <div className="min-h-svh bg-background">
-      <main className="mx-auto flex min-h-svh max-w-lg flex-col justify-center px-5 py-10">
+    <main className="mx-auto max-w-lg px-5 py-10">
         <div className="mb-8 text-center">
           <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
             Step 1 of 2
@@ -102,7 +101,6 @@ export function OnboardingQuizForm() {
             </Button>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </main>
   );
 }

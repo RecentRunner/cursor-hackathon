@@ -3,15 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { AvatarCustomizeLayout } from "@/components/avatar/avatar-customize-layout";
 import { CharacterCreator } from "@/components/character/character-creator";
 import { useToast } from "@/components/ui/toast-provider";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   defaultAvatarCustomization,
   saveAvatarCustomization,
@@ -53,42 +47,20 @@ export function OnboardingCustomizeForm() {
   };
 
   return (
-    <div className="min-h-svh bg-background">
-      <main className="mx-auto flex min-h-svh max-w-6xl flex-col justify-center px-4 py-10">
-        <div className="mb-8 space-y-2 text-center">
-          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
-            Step 2 of 2
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Create your Habit Pet
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
-            Customize your pet&apos;s look, give them a name, and confirm before
-            entering the app.
-          </p>
-        </div>
-
-        <Card className="border-border/60 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">Avatar customization</CardTitle>
-            <CardDescription>
-              Pick styles and colors for each layer. You can change these later
-              from the Pet tab.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <CharacterCreator
-              initialCustomization={defaultAvatarCustomization}
-              name={avatarName}
-              onNameChange={setAvatarName}
-              showNameField
-              saveLabel={isSubmitting ? "Saving..." : "Confirm avatar"}
-              isSaving={isSubmitting}
-              onSave={handleSave}
-            />
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+    <AvatarCustomizeLayout
+      eyebrow="Step 2 of 2"
+      title="Create your Habit Pet"
+      description="Customize your pet's look, give them a name, and confirm before entering the app."
+    >
+      <CharacterCreator
+        initialCustomization={defaultAvatarCustomization}
+        name={avatarName}
+        onNameChange={setAvatarName}
+        showNameField
+        saveLabel={isSubmitting ? "Saving..." : "Confirm avatar"}
+        isSaving={isSubmitting}
+        onSave={handleSave}
+      />
+    </AvatarCustomizeLayout>
   );
 }

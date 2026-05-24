@@ -35,7 +35,7 @@ import { getProfilePreferences } from "@/lib/profile-preferences-storage";
 import { hasCompletedDailyQuizToday } from "@/lib/daily-quiz-storage";
 
 type HabitTrackerProps = {
-  mode?: "daily" | "manage";
+  mode?: "daily" | "manage" | "all";
 };
 
 const reasonLabels = {
@@ -406,6 +406,90 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
           </p>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (mode === "all") {
+    return (
+      <div className="flex flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Today&apos;s tasks</CardTitle>
+            <CardDescription>
+              Personalized from your focus topics
+              {quizCompletedToday ? ", today's quiz," : ""} and custom habits.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error ? <p className="text-sm text-red-500">{error}</p> : null}
+            {coinMessage ? (
+              <p className="text-sm font-medium text-emerald-600">{coinMessage}</p>
+            ) : null}
+            <DailyTaskList
+              tasks={dailyTasks}
+              getIsCompleted={getIsCompleted}
+              isPending={isPending}
+              getToggleError={getToggleError}
+              onToggle={handleToggle}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Custom habits</CardTitle>
+            <CardDescription>
+              Add your own habits. Custom habits always appear in your daily
+              task list.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <CustomHabitList habits={customHabits} onRemove={handleRemoveHabit} />
+            <div className="flex gap-2">
+              <Input
+                value={newHabitLabel}
+                placeholder="Add a custom habit"
+                disabled={isSaving}
+                onChange={(event) => setNewHabitLabel(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void handleAddHabit();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                disabled={isSaving || newHabitLabel.trim().length === 0}
+                onClick={() => void handleAddHabit()}
+              >
+                Add
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">How daily tasks are picked</CardTitle>
+            <CardDescription>
+              Your tasks combine focus preferences, custom habits, and today&apos;s
+              quiz.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Focus topics: {focusTopic ?? "None selected"}</p>
+            <p>
+              Daily quiz today:{" "}
+              {quizCompletedToday ? "Completed" : "Not completed yet"}
+            </p>
+            <p>
+              Suggested habits can appear when your quiz shows low energy, high
+              stress, or poor sleep.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 

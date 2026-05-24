@@ -16,6 +16,11 @@ import {
   NONE_VARIANT_ID,
 } from "@/lib/character/presets";
 import type { LayerColorState, LayerVariantState } from "@/lib/character/types";
+import {
+  DEFAULT_ROOM_BACKGROUND,
+  normalizeRoomBackgroundId,
+  type RoomBackgroundId,
+} from "@/lib/room-backgrounds";
 import { createClient } from "@/lib/supabase/client";
 
 export type AvatarCustomization = {
@@ -24,6 +29,7 @@ export type AvatarCustomization = {
   variants: LayerVariantState;
   customized: boolean;
   equippedItems: string[];
+  roomBackground: RoomBackgroundId;
 };
 
 type AvatarStateRow = {
@@ -41,6 +47,7 @@ type AvatarStateRow = {
   head_color: string | null;
   avatar_customized: boolean | null;
   equipped_items: string[] | null;
+  room_background: string | null;
 };
 
 export const DEFAULT_AVATAR_NAME = "Pixel Me";
@@ -53,10 +60,18 @@ export const defaultAvatarCustomization: AvatarCustomization = {
   variants: buildDefaultVariants(),
   customized: false,
   equippedItems: [],
+  roomBackground: DEFAULT_ROOM_BACKGROUND,
 };
 
 const avatarSelectFields =
+  "avatar_name, skin_color, pants_style, pants_color, shoe_style, shoe_color, torso_style, torso_color, eye_type, eye_color, head_style, head_color, avatar_customized, equipped_items, room_background";
+
+const avatarSelectFieldsLegacy =
   "avatar_name, skin_color, pants_style, pants_color, shoe_style, shoe_color, torso_style, torso_color, eye_type, eye_color, head_style, head_color, avatar_customized, equipped_items";
+
+function isMissingRoomBackgroundColumn(message: string) {
+  return /room_background/i.test(message);
+}
 
 function colorFromHex(hex: string | null | undefined, fallback: HSL): HSL {
   if (!hex?.trim() || !HEX_COLOR_PATTERN.test(hex)) {
@@ -109,6 +124,7 @@ export function mapRowToAvatarCustomization(
     },
     customized: row.avatar_customized === true,
     equippedItems: row.equipped_items ?? [],
+    roomBackground: normalizeRoomBackgroundId(row.room_background),
   };
 }
 
@@ -132,6 +148,7 @@ export function mapAvatarCustomizationToRow(customization: AvatarCustomization) 
     eye_color: normalizeHexColor(colors.eyes, defaults.eyes),
     head_style: normalizedVariants.head,
     head_color: normalizeHexColor(colors.head, defaults.head),
+    room_background: normalizeRoomBackgroundId(customization.roomBackground),
     avatar_customized: true,
     updated_at: new Date().toISOString(),
   };
@@ -159,13 +176,28 @@ export async function getAvatarCustomization(): Promise<AvatarCustomization> {
   }
 
   const supabase = createClient();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("avatar_state")
     .select(avatarSelectFields)
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (error) {
+  if (error && isMissingRoomBackgroundColumn(error.message)) {
+    const legacy = await supabase
+      .from("avatar_state")
+      .select(avatarSelectFieldsLegacy)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (legacy.error) {
+      throw new Error(legacy.error.message);
+    }
+
+    data = legacy.data
+      ? ({ ...legacy.data, room_background: null } as AvatarStateRow)
+      : null;
+    error = null;
+  } else if (error) {
     throw new Error(error.message);
   }
 
@@ -209,10 +241,21 @@ export async function saveAvatarCustomization(
   const supabase = createClient();
   const payload = mapAvatarCustomizationToRow(customization);
 
-  const { error } = await supabase
+  let { error } = await supabase
     .from("avatar_state")
     .update(payload)
     .eq("user_id", userId);
+
+  if (error && isMissingRoomBackgroundColumn(error.message)) {
+    const { room_background, ...legacyPayload } = payload;
+    void room_background;
+    const retry = await supabase
+      .from("avatar_state")
+      .update(legacyPayload)
+      .eq("user_id", userId);
+
+    error = retry.error;
+  }
 
   if (error) {
     throw new Error(error.message);

@@ -128,6 +128,31 @@ export async function purchaseShopItem(itemId: string) {
   };
 }
 
+export async function getEquippedRoomBackground(): Promise<string> {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return "room-day";
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("avatar_state")
+    .select("room_background")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    if (/room_background/i.test(error.message)) {
+      return "room-day";
+    }
+
+    throw new Error(error.message);
+  }
+
+  return (data?.room_background as string | null) ?? "room-day";
+}
+
 export async function equipShopItem(itemId: string) {
   const userId = await getAuthenticatedUserId();
 
@@ -150,6 +175,28 @@ export async function equipShopItem(itemId: string) {
 
   if (itemError || !item) {
     throw new Error("Could not find that shop item.");
+  }
+
+  if (item.type === "room") {
+    const { error } = await supabase
+      .from("avatar_state")
+      .update({
+        room_background: itemId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId);
+
+    if (error) {
+      if (/room_background/i.test(error.message)) {
+        notifyHabitPetDataUpdated();
+        return [itemId];
+      }
+
+      throw new Error(error.message);
+    }
+
+    notifyHabitPetDataUpdated();
+    return [itemId];
   }
 
   const current = await getEquippedItems();
@@ -216,12 +263,14 @@ export async function unequipShopItem(itemId: string) {
 }
 
 export async function getShopInventory() {
-  const [items, ownedItemIds, equippedItems, coins] = await Promise.all([
-    getShopItems(),
-    getOwnedItemIds(),
-    getEquippedItems(),
-    getCoins(),
-  ]);
+  const [items, ownedItemIds, equippedItems, equippedRoomBackground, coins] =
+    await Promise.all([
+      getShopItems(),
+      getOwnedItemIds(),
+      getEquippedItems(),
+      getEquippedRoomBackground(),
+      getCoins(),
+    ]);
 
-  return { items, ownedItemIds, equippedItems, coins };
+  return { items, ownedItemIds, equippedItems, equippedRoomBackground, coins };
 }

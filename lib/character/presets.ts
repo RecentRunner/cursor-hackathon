@@ -152,6 +152,16 @@ export const CHARACTER_LAYERS: CharacterLayer[] = [
   },
 ];
 
+export type CharacterCreatorTabId = CharacterLayerId | "room";
+
+export const CHARACTER_CUSTOMIZATION_TABS: {
+  id: CharacterCreatorTabId;
+  label: string;
+}[] = [
+  ...CHARACTER_LAYERS.map((layer) => ({ id: layer.id, label: layer.label })),
+  { id: "room", label: "Room" },
+];
+
 export const LAYER_DEFAULT_COLORS: Record<CharacterLayerId, HSL> = {
   skin: DEFAULT_GRAY_COLOR.hsl,
   pants: DEFAULT_GRAY_COLOR.hsl,

@@ -58,6 +58,13 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        sans: ["var(--font-pixel)", "monospace"],
+        pixel: ["var(--font-pixel)", "monospace"],
+      },
+      spacing: {
+        nav: "var(--bottom-nav-height)",
+      },
     },
   },
   plugins: [tailwindcssAnimate],

@@ -5,9 +5,9 @@ export default function HabitsPage() {
   return (
     <AppShell
       title="Habits"
-      description="Add custom habits and see how your daily tasks are chosen."
+      description="Complete today's tasks and manage your habit list."
     >
-      <HabitTracker mode="manage" />
+      <HabitTracker mode="all" />
     </AppShell>
   );
 }

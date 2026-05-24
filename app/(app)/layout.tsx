@@ -10,11 +10,11 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={<div className="min-h-svh bg-background" />}>
+    <Suspense fallback={<div className="bg-background pb-nav" />}>
       <AppAuthGate>
         <DailyReminderProvider />
         <InAppReminderBanner />
-        {children}
+        <div className="pb-nav">{children}</div>
       </AppAuthGate>
     </Suspense>
   );

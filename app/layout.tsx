@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Press_Start_2P } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
 import { GlobalBottomNav } from "@/components/layout/global-bottom-nav";
@@ -16,10 +16,11 @@ export const metadata: Metadata = {
   description: "Build habits, care for your pixel pet, and track wellness every day.",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  display: "swap",
+const pixelFont = Press_Start_2P({
+  weight: "400",
   subsets: ["latin"],
+  variable: "--font-pixel",
+  display: "swap",
 });
 
 export default function RootLayout({
@@ -29,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
+      <body className={`${pixelFont.variable} font-sans`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -37,7 +38,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ToastProvider>
-            <div className="min-h-svh pb-24">{children}</div>
+            {children}
             <GlobalBottomNav />
           </ToastProvider>
         </ThemeProvider>

@@ -1,0 +1,107 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { CharacterLayerPreview } from "@/components/character/character-layer-preview";
+import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
+import { cn } from "@/lib/utils";
+
+type AnimatedPetSpriteProps = {
+  customization: AvatarCustomization;
+  className?: string;
+};
+
+type WanderPosition = {
+  x: number;
+  y: number;
+  facing: "left" | "right";
+};
+
+const MIN_X = 24;
+const MAX_X = 72;
+const MIN_Y = 34;
+const MAX_Y = 62;
+
+function randomPosition(current?: WanderPosition): WanderPosition {
+  let next: WanderPosition = {
+    x: MIN_X + Math.random() * (MAX_X - MIN_X),
+    y: MIN_Y + Math.random() * (MAX_Y - MIN_Y),
+    facing: Math.random() > 0.5 ? "right" : "left",
+  };
+
+  if (current) {
+    let attempts = 0;
+    while (
+      attempts < 6 &&
+      Math.hypot(next.x - current.x, next.y - current.y) < 8
+    ) {
+      next = {
+        x: MIN_X + Math.random() * (MAX_X - MIN_X),
+        y: MIN_Y + Math.random() * (MAX_Y - MIN_Y),
+        facing: next.x >= current.x ? "right" : "left",
+      };
+      attempts += 1;
+    }
+  }
+
+  return next;
+}
+
+export function AnimatedPetSprite({
+  customization,
+  className,
+}: AnimatedPetSpriteProps) {
+  const [position, setPosition] = useState<WanderPosition>({
+    x: 48,
+    y: 48,
+    facing: "right",
+  });
+
+  useEffect(() => {
+    let timeoutId: number | undefined;
+
+    const scheduleWander = () => {
+      const delay = 1800 + Math.random() * 3200;
+      timeoutId = window.setTimeout(() => {
+        setPosition((current) => randomPosition(current));
+        scheduleWander();
+      }, delay);
+    };
+
+    scheduleWander();
+    return () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      className={cn("pointer-events-none absolute z-10", className)}
+      style={{
+        left: `${position.x}%`,
+        top: `${position.y}%`,
+        transform: "translate(-50%, -50%)",
+        transition: "left 1.8s steps(10), top 1.8s steps(10)",
+      }}
+    >
+      <div
+        style={{
+          transform: position.facing === "left" ? "scaleX(-1)" : undefined,
+        }}
+      >
+        <div className="animate-pet-breathe origin-bottom">
+          <CharacterLayerPreview
+            colors={customization.colors}
+            variants={customization.variants}
+            equippedItems={customization.equippedItems}
+            scale={7}
+            compact
+            className="!h-auto max-h-none"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
