@@ -13,6 +13,10 @@ import {
 
 import { cn } from "@/lib/utils";
 import { appNavItems, routes, type NavItem } from "@/lib/routes";
+import {
+  prefetchHabitsTabData,
+  prefetchQuizTabData,
+} from "@/lib/app-tab-data-cache";
 
 const gridColsClass = {
   1: "grid-cols-1",
@@ -30,6 +34,15 @@ const navIcons = {
   [routes.shop]: ShoppingBag,
   [routes.profile]: UserRound,
 } as const;
+
+const prefetchByRoute: Partial<Record<string, () => void>> = {
+  [routes.habits]: () => {
+    void prefetchHabitsTabData();
+  },
+  [routes.dailyQuiz]: () => {
+    void prefetchQuizTabData();
+  },
+};
 
 type AppNavProps = {
   items?: readonly NavItem[];
@@ -76,6 +89,9 @@ export const AppNav = forwardRef<HTMLElement, AppNavProps>(function AppNav(
               href={item.href}
               aria-label={item.label}
               title={item.label}
+              prefetch
+              onPointerEnter={() => prefetchByRoute[item.href]?.()}
+              onFocus={() => prefetchByRoute[item.href]?.()}
               className={cn(
                 "bottom-nav-item flex flex-col items-center justify-center gap-1.5 overflow-hidden border-2 px-1 py-2 text-[9px] leading-none transition-colors duration-75",
                 isActive

@@ -27,25 +27,44 @@ import {
 } from "@/lib/avatar-state";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import {
+  getCachedQuizTabData,
+  prefetchQuizTabData,
+} from "@/lib/app-tab-data-cache";
+import {
   getAvatarConditionForToday,
-  getDailyEntryForToday,
   saveDailyEntry,
 } from "@/lib/daily-quiz-storage";
 import { JOURNAL_MAX_LENGTH } from "@/lib/journal-safety";
 
 export function DailyQuizForm() {
+  const cachedQuiz = getCachedQuizTabData();
   const [answers, setAnswers] = useState<DailyQuizAnswers>(
-    defaultDailyQuizAnswers,
+    cachedQuiz?.submission?.answers ?? defaultDailyQuizAnswers,
   );
-  const [journal, setJournal] = useState("");
+  const [journal, setJournal] = useState(cachedQuiz?.submission?.journal ?? "");
   const [submission, setSubmission] = useState<DailyQuizSubmission | null>(
-    null,
+    cachedQuiz?.submission ?? null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(cachedQuiz !== null);
   const [liveCondition, setLiveCondition] = useState(
-    submission?.condition ?? null,
+    cachedQuiz?.liveCondition ?? cachedQuiz?.submission?.condition ?? null,
+  );
+
+  const applyQuizData = useCallback(
+    (data: NonNullable<ReturnType<typeof getCachedQuizTabData>>) => {
+      if (data.submission) {
+        setSubmission(data.submission);
+        setAnswers(data.submission.answers);
+        setJournal(data.submission.journal);
+        setLiveCondition(data.submission.condition);
+      } else {
+        setSubmission(null);
+        setLiveCondition(data.liveCondition);
+      }
+    },
+    [],
   );
 
   const refreshLiveCondition = useCallback(async () => {
@@ -53,31 +72,40 @@ export function DailyQuizForm() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadDailyCheckIn() {
       try {
-        const existingEntry = await getDailyEntryForToday();
+        const data = await prefetchQuizTabData();
 
-        if (existingEntry) {
-          setSubmission(existingEntry);
-          setAnswers(existingEntry.answers);
-          setJournal(existingEntry.journal);
-          setLiveCondition(existingEntry.condition);
-        } else {
-          await refreshLiveCondition();
+        if (cancelled) {
+          return;
         }
+
+        applyQuizData(data);
       } catch (loadError) {
+        if (cancelled) {
+          return;
+        }
+
         setError(
           loadError instanceof Error
             ? loadError.message
             : "Could not load today's check-in.",
         );
       } finally {
-        setIsReady(true);
+        if (!cancelled) {
+          setIsReady(true);
+        }
       }
     }
 
     void loadDailyCheckIn();
-  }, [refreshLiveCondition]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyQuizData]);
 
   useEffect(() => {
     const handleDataUpdated = () => {

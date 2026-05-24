@@ -17,12 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import {
-  getDailyTasks,
-  type DailyTask,
-} from "@/lib/daily-tasks";
+  getCachedHabitsTabData,
+  prefetchHabitsTabData,
+} from "@/lib/app-tab-data-cache";
+import type { DailyTask } from "@/lib/daily-tasks";
 import {
   addHabit,
-  getCustomHabits,
   getTodayDateKey,
   isHabitCompletedToday,
   removeHabit,
@@ -31,8 +31,6 @@ import {
 } from "@/lib/habits-storage";
 import { formatCoinsDelta } from "@/lib/coins";
 import { describeHabitWellnessBoost } from "@/lib/habit-wellness-effects";
-import { getProfilePreferences } from "@/lib/profile-preferences-storage";
-import { hasCompletedDailyQuizToday } from "@/lib/daily-quiz-storage";
 
 type HabitTrackerProps = {
   mode?: "daily" | "manage" | "all";
@@ -184,13 +182,22 @@ function CustomHabitList({
 }
 
 export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
-  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
-  const [customHabits, setCustomHabits] = useState<Habit[]>([]);
+  const cachedHabits = getCachedHabitsTabData();
+  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>(
+    cachedHabits?.dailyTasks ?? [],
+  );
+  const [customHabits, setCustomHabits] = useState<Habit[]>(
+    cachedHabits?.customHabits ?? [],
+  );
   const [newHabitLabel, setNewHabitLabel] = useState("");
-  const [focusTopic, setFocusTopic] = useState<string | null>(null);
-  const [quizCompletedToday, setQuizCompletedToday] = useState(false);
+  const [focusTopic, setFocusTopic] = useState<string | null>(
+    cachedHabits?.focusTopic ?? null,
+  );
+  const [quizCompletedToday, setQuizCompletedToday] = useState(
+    cachedHabits?.quizCompletedToday ?? false,
+  );
   const [error, setError] = useState<string | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(cachedHabits !== null);
   const [isSaving, setIsSaving] = useState(false);
   const [optimisticCompletion, setOptimisticCompletion] = useState<
     Record<string, boolean>
@@ -223,17 +230,21 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
     [toggleErrors],
   );
 
+  const applyHabitsData = useCallback(
+    (data: NonNullable<ReturnType<typeof getCachedHabitsTabData>>) => {
+      setDailyTasks(data.dailyTasks);
+      setCustomHabits(data.customHabits);
+      setFocusTopic(data.focusTopic);
+      setQuizCompletedToday(data.quizCompletedToday);
+    },
+    [],
+  );
+
   const refresh = useCallback(async () => {
     try {
       setError(null);
-      const [tasks, customs] = await Promise.all([
-        getDailyTasks(),
-        getCustomHabits(),
-      ]);
-      setDailyTasks(tasks);
-      setCustomHabits(customs);
-      setFocusTopic((await getProfilePreferences()).focusTopic);
-      setQuizCompletedToday(await hasCompletedDailyQuizToday());
+      const data = await prefetchHabitsTabData({ force: true });
+      applyHabitsData(data);
       setIsReady(true);
     } catch (refreshError) {
       setError(
@@ -243,7 +254,27 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       );
       setIsReady(true);
     }
-  }, []);
+  }, [applyHabitsData]);
+
+  useEffect(() => {
+    void prefetchHabitsTabData()
+      .then(applyHabitsData)
+      .catch((refreshError) => {
+        setError(
+          refreshError instanceof Error
+            ? refreshError.message
+            : "Could not load habits.",
+        );
+      })
+      .finally(() => {
+        setIsReady(true);
+      });
+
+    window.addEventListener(HABIT_PET_DATA_UPDATED_EVENT, refresh);
+    return () => {
+      window.removeEventListener(HABIT_PET_DATA_UPDATED_EVENT, refresh);
+    };
+  }, [applyHabitsData, refresh]);
 
   useEffect(() => {
     if (!coinMessage) {
@@ -289,15 +320,6 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [refresh, todayKey]);
-
-  useEffect(() => {
-    void refresh();
-
-    window.addEventListener(HABIT_PET_DATA_UPDATED_EVENT, refresh);
-    return () => {
-      window.removeEventListener(HABIT_PET_DATA_UPDATED_EVENT, refresh);
-    };
-  }, [refresh]);
 
   const handleToggle = (habitId: string) => {
     const habit = dailyTasks.find((task) => task.id === habitId);

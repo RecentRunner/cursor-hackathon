@@ -8,6 +8,8 @@ export default function AvatarPage() {
     <AppShell
       title="Your Habit Pet"
       description="Watch your pet roam, breathe, and react to how you care for them."
+      fillViewport
+      centered
     >
       <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
         <AvatarPageContent />

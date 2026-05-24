@@ -12,7 +12,8 @@ type AppTopBarProps = {
 
 export function AppTopBar({ className }: AppTopBarProps) {
   const pathname = usePathname();
-  const isHome = pathname === routes.avatar;
+  const isHome =
+    pathname === routes.home || pathname === routes.avatar;
 
   return (
     <header

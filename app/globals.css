@@ -116,6 +116,21 @@
     max-width: calc(32rem - 2.5rem - 2rem);
   }
 
+  .pet-viewport-stage {
+    @apply flex min-h-0 w-full flex-1 flex-col items-center justify-center;
+  }
+
+  .tamagotchi-shell-fill {
+    @apply flex min-h-0 w-full max-w-4xl flex-1 flex-col;
+  }
+
+  .tamagotchi-lcd-pet-fill {
+    @apply relative min-h-0 w-full flex-1;
+    min-height: 16rem;
+    max-width: none;
+    aspect-ratio: auto;
+  }
+
   .customize-body {
     min-height: 26rem;
   }

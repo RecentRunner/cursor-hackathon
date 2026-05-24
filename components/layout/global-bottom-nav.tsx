@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { AppNav } from "@/components/layout/app-nav";
+import { AppDataPrefetcher } from "@/components/layout/app-data-prefetcher";
 import {
   NavOffsetProvider,
   useNavOffsetRef,
@@ -55,6 +56,7 @@ export function GlobalBottomNav() {
 
   return (
     <NavOffsetProvider enabled={showNav}>
+      <AppDataPrefetcher enabled={showNav} />
       {showNav ? <MeasuredAppNav /> : null}
     </NavOffsetProvider>
   );

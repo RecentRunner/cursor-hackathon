@@ -16,7 +16,7 @@ type HabitBrandProps = {
 
 export function HabitBrand({
   className,
-  href = routes.avatar,
+  href = routes.home,
   "aria-current": ariaCurrent,
 }: HabitBrandProps) {
   const [useText, setUseText] = useState(false);

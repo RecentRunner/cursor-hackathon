@@ -45,5 +45,5 @@ export function AvatarPageContent() {
     );
   }
 
-  return <PetHabitat customization={customization} />;
+  return <PetHabitat customization={customization} fillViewport />;
 }

@@ -7,6 +7,10 @@ type AppShellProps = {
   title?: string;
   description?: string;
   wide?: boolean;
+  /** Use remaining viewport height between top bar and bottom nav. */
+  fillViewport?: boolean;
+  /** Center page content horizontally (pairs well with fillViewport). */
+  centered?: boolean;
 };
 
 const contentWidthClass = {
@@ -19,20 +23,33 @@ export function AppShell({
   title,
   description,
   wide = false,
+  fillViewport = false,
+  centered = false,
 }: AppShellProps) {
   return (
-    <div className="relative min-h-dvh bg-background bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/0.12)_0%,transparent_45%),radial-gradient(circle_at_80%_100%,hsl(var(--secondary)/0.1)_0%,transparent_40%)] pt-topbar">
+    <div className="relative flex min-h-dvh flex-col bg-background bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/0.12)_0%,transparent_45%),radial-gradient(circle_at_80%_100%,hsl(var(--secondary)/0.1)_0%,transparent_40%)] pt-topbar">
       <AppTopBar />
       <main
         className={cn(
-          "mx-auto px-4 py-6 lg:px-5",
+          "mx-auto flex w-full flex-1 flex-col px-4 py-6 lg:px-5",
+          fillViewport
+            ? "min-h-[calc(100dvh-var(--app-topbar-height)-var(--app-nav-offset)-env(safe-area-inset-top,0px))]"
+            : null,
+          centered ? "items-center" : null,
           wide ? contentWidthClass.wide : contentWidthClass.default,
+          fillViewport && "max-w-none lg:max-w-none",
         )}
       >
         {title ? (
           <AppPageHeader title={title} description={description} />
         ) : null}
-        {children}
+        <div
+          className={cn(
+            fillViewport ? "pet-viewport-stage flex w-full flex-1 flex-col" : "contents",
+          )}
+        >
+          {children}
+        </div>
       </main>
     </div>
   );

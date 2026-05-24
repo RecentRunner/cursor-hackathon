@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 type PetHabitatProps = {
   customization: AvatarCustomization;
   className?: string;
+  fillViewport?: boolean;
 };
 
 const MOOD_LABELS = {
@@ -29,7 +30,11 @@ const MOOD_LABELS = {
   tired: "SLEEPY",
 } as const;
 
-export function PetHabitat({ customization, className }: PetHabitatProps) {
+export function PetHabitat({
+  customization,
+  className,
+  fillViewport = false,
+}: PetHabitatProps) {
   const [condition, setCondition] = useState<AvatarCondition>(
     defaultAvatarCondition,
   );
@@ -45,9 +50,20 @@ export function PetHabitat({ customization, className }: PetHabitatProps) {
     void loadStatus();
   }, []);
 
+  const shellClassName = cn(
+    "tamagotchi-shell overflow-hidden p-3 sm:p-4",
+    fillViewport && "tamagotchi-shell-fill",
+    className,
+  );
+
+  const lcdClassName = cn(
+    "tamagotchi-lcd relative",
+    fillViewport ? "tamagotchi-lcd-pet-fill" : "tamagotchi-lcd-pet-match",
+  );
+
   if (!isReady) {
     return (
-      <div className={cn("tamagotchi-shell p-4", className)}>
+      <div className={shellClassName}>
         <p className="text-center text-[10px] text-muted-foreground">
           Waking up pet...
         </p>
@@ -56,15 +72,15 @@ export function PetHabitat({ customization, className }: PetHabitatProps) {
   }
 
   return (
-    <div className={cn("tamagotchi-shell overflow-hidden p-3 sm:p-4", className)}>
-      <div className="mb-3 border-b-2 border-border/60 pb-3">
+    <div className={shellClassName}>
+      <div className="mb-3 shrink-0 border-b-2 border-border/60 pb-3">
         <p className="text-sm text-foreground">{customization.name}</p>
         <p className="mt-1 text-[9px] uppercase tracking-[0.25em] text-secondary">
           {MOOD_LABELS[condition.mood]}
         </p>
       </div>
 
-      <div className="tamagotchi-lcd tamagotchi-lcd-pet-match relative">
+      <div className={lcdClassName}>
         <ParallaxRoomBackground roomId={roomId as RoomBackgroundId} />
         <AnimatedPetSprite customization={customization} />
         <div className="pointer-events-none absolute left-2 top-2 z-20 grid gap-1.5">
