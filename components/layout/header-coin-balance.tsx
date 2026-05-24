@@ -33,10 +33,19 @@ export function HeaderCoinBalance() {
   }, []);
 
   useEffect(() => {
+    const supabase = createClient();
+
     void refresh();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void refresh();
+    });
 
     window.addEventListener(HABIT_PET_DATA_UPDATED_EVENT, refresh);
     return () => {
+      subscription.unsubscribe();
       window.removeEventListener(HABIT_PET_DATA_UPDATED_EVENT, refresh);
     };
   }, [refresh]);
