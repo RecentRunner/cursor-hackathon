@@ -132,6 +132,17 @@ export function ShopContent() {
 
       {error ? <p className="mb-4 text-sm text-red-500">{error}</p> : null}
 
+      {!error && coins !== null && groupedItems.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">
+              Nothing in the shop right now. Keep completing habits and daily
+              check-ins to earn points for when new styles arrive.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-6">
         {groupedItems.map((group) => (
           <section key={group.layerId} className="grid gap-3">
