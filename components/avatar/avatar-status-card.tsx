@@ -29,10 +29,14 @@ export function AvatarStatusCard() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const checkedIn = hasCompletedDailyQuizToday();
-    setHasCheckedInToday(checkedIn);
-    setCondition(getAvatarConditionForToday() ?? defaultAvatarCondition);
-    setIsReady(true);
+    async function loadStatus() {
+      const checkedIn = await hasCompletedDailyQuizToday();
+      setHasCheckedInToday(checkedIn);
+      setCondition((await getAvatarConditionForToday()) ?? defaultAvatarCondition);
+      setIsReady(true);
+    }
+
+    void loadStatus();
   }, []);
 
   if (!isReady) {

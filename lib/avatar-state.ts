@@ -17,18 +17,40 @@ export type AvatarCondition = {
 export type DailyQuizSubmission = {
   date: string;
   answers: DailyQuizAnswers;
+  journal: string;
   condition: AvatarCondition;
 };
 
 export const WELLNESS_SCALE_MAX = 5;
 
+export const SLEEP_HOURS_MIN = 0.5;
+export const SLEEP_HOURS_MAX = 12;
+export const SLEEP_HOURS_STEP = 0.5;
+export const DEFAULT_SLEEP_HOURS = 7.5;
+
 export const defaultDailyQuizAnswers: DailyQuizAnswers = {
   feeling: 3,
   stress: 3,
   energy: 3,
-  sleepLength: 3,
+  sleepLength: DEFAULT_SLEEP_HOURS,
   sleepQuality: 3,
 };
+
+export function clampSleepHours(hours: number) {
+  const stepped = Math.round(hours / SLEEP_HOURS_STEP) * SLEEP_HOURS_STEP;
+  return Math.min(SLEEP_HOURS_MAX, Math.max(SLEEP_HOURS_MIN, stepped));
+}
+
+export function formatSleepHours(hours: number) {
+  return hours === 1 ? "1 hour" : `${hours} hours`;
+}
+
+function sleepHoursToWellnessScore(hours: number) {
+  const score =
+    1 + ((clampSleepHours(hours) - SLEEP_HOURS_MIN) / (SLEEP_HOURS_MAX - SLEEP_HOURS_MIN)) * 4;
+
+  return clampStat(Math.round(score));
+}
 
 export function computeAvatarCondition(
   answers: DailyQuizAnswers,
@@ -36,7 +58,8 @@ export function computeAvatarCondition(
   const { feeling, stress, energy, sleepLength, sleepQuality } = answers;
 
   const wellnessAverage = (feeling + energy + (WELLNESS_SCALE_MAX + 1 - stress)) / 3;
-  const sleepAverage = (sleepLength + sleepQuality) / 2;
+  const sleepScore = sleepHoursToWellnessScore(sleepLength);
+  const sleepAverage = (sleepScore + sleepQuality) / 2;
   const health = Math.round((wellnessAverage + sleepAverage) / 2);
   const energyLevel = Math.round((energy + sleepQuality) / 2);
 
@@ -44,7 +67,7 @@ export function computeAvatarCondition(
 
   if (energyLevel >= 4 && feeling >= 4 && health >= 4) {
     avatarMood = "happy";
-  } else if (energy <= 2 || sleepLength <= 2 || sleepQuality <= 2) {
+  } else if (energy <= 2 || sleepLength < 6 || sleepQuality <= 2) {
     avatarMood = "tired";
   }
 
@@ -82,11 +105,19 @@ export function normalizeDailyQuizAnswers(
       : value;
   };
 
+  const normalizeSleepLength = (value: number | undefined) => {
+    if (value === undefined) {
+      return defaultDailyQuizAnswers.sleepLength;
+    }
+
+    return clampSleepHours(value);
+  };
+
   return {
     feeling: scaleValue(answers.feeling ?? answers.mood, defaultDailyQuizAnswers.feeling),
     stress: scaleValue(answers.stress, defaultDailyQuizAnswers.stress),
     energy: scaleValue(answers.energy, defaultDailyQuizAnswers.energy),
-    sleepLength: scaleValue(answers.sleepLength, defaultDailyQuizAnswers.sleepLength),
+    sleepLength: normalizeSleepLength(answers.sleepLength),
     sleepQuality: scaleValue(
       answers.sleepQuality,
       defaultDailyQuizAnswers.sleepQuality,

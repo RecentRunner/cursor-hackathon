@@ -1,5 +1,5 @@
 import type { DailyQuizAnswers } from "@/lib/avatar-state";
-import { getDailyQuizSubmission, getTodayDateKey } from "@/lib/daily-quiz-storage";
+import { getDailyEntryForToday } from "@/lib/daily-quiz-storage";
 import {
   catalogHabitIds,
   getCatalogEntry,
@@ -7,7 +7,11 @@ import {
   matchesFocusTopics,
   matchesQuizAnswers,
 } from "@/lib/habit-catalog";
-import { getHabits, saveHabits, type Habit } from "@/lib/habits-storage";
+import {
+  ensureCatalogHabit,
+  getHabits,
+  type Habit,
+} from "@/lib/habits-storage";
 import {
   getProfilePreferences,
   type ProfilePreferences,
@@ -19,37 +23,9 @@ export type DailyTask = Habit & {
   reason: DailyTaskReason;
 };
 
-function getQuizAnswersForToday(): DailyQuizAnswers | null {
-  const submission = getDailyQuizSubmission();
-
-  if (!submission || submission.date !== getTodayDateKey()) {
-    return null;
-  }
-
-  return submission.answers;
-}
-
-function ensureCatalogHabit(entryId: string, habits: Habit[]) {
-  const entry = getCatalogEntry(entryId);
-
-  if (!entry) {
-    return habits;
-  }
-
-  if (habits.some((habit) => habit.id === entry.id)) {
-    return habits;
-  }
-
-  return [
-    ...habits,
-    {
-      id: entry.id,
-      label: entry.label,
-      streak: 0,
-      lastCompletedDate: null,
-      isCustom: false,
-    },
-  ];
+async function getQuizAnswersForToday(): Promise<DailyQuizAnswers | null> {
+  const entry = await getDailyEntryForToday();
+  return entry?.answers ?? null;
 }
 
 function getCatalogTaskReason(
@@ -71,34 +47,33 @@ function getCatalogTaskReason(
   return null;
 }
 
-export function getDailyTasks(): DailyTask[] {
-  let habits = getHabits();
+export async function getDailyTasks(): Promise<DailyTask[]> {
   const preferences = getProfilePreferences();
-  const quizAnswers = getQuizAnswersForToday();
-  const initialHabitCount = habits.length;
+  const quizAnswers = await getQuizAnswersForToday();
 
   const selectedCatalogIds = habitCatalog
     .map((entry) => {
       const reason = getCatalogTaskReason(entry, preferences, quizAnswers);
-      return reason ? { id: entry.id, reason } : null;
+      return reason ? { catalogId: entry.id, reason } : null;
     })
-    .filter((item): item is { id: string; reason: DailyTaskReason } => item !== null);
+    .filter(
+      (item): item is { catalogId: string; reason: DailyTaskReason } =>
+        item !== null,
+    );
 
-  for (const { id } of selectedCatalogIds) {
-    habits = ensureCatalogHabit(id, habits);
-  }
+  await Promise.all(
+    selectedCatalogIds.map(({ catalogId }) => ensureCatalogHabit(catalogId)),
+  );
 
-  if (habits.length !== initialHabitCount) {
-    saveHabits(habits, { notify: false });
-  }
+  const habits = await getHabits();
 
   const customTasks: DailyTask[] = habits
     .filter((habit) => habit.isCustom)
     .map((habit) => ({ ...habit, reason: "custom" as const }));
 
   const catalogTasks: DailyTask[] = selectedCatalogIds
-    .map(({ id, reason }) => {
-      const habit = habits.find((item) => item.id === id);
+    .map(({ catalogId, reason }) => {
+      const habit = habits.find((item) => item.catalogId === catalogId);
       return habit ? { ...habit, reason } : null;
     })
     .filter((task): task is DailyTask => task !== null);
@@ -106,6 +81,4 @@ export function getDailyTasks(): DailyTask[] {
   return [...customTasks, ...catalogTasks];
 }
 
-export function isCatalogHabitId(habitId: string) {
-  return catalogHabitIds.has(habitId);
-}
+export { isCatalogHabitId } from "@/lib/habits-storage";

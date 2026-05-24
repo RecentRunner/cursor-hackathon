@@ -50,7 +50,7 @@ export const habitCatalog: HabitCatalogEntry[] = [
     label: "Wind down before bed",
     focusTopics: ["Sleep"],
     suggestedByQuiz: (answers) =>
-      answers.sleepLength <= 2 || answers.sleepQuality <= 2,
+      answers.sleepLength < 7 || answers.sleepQuality <= 2,
   },
 ];
 
@@ -58,6 +58,14 @@ export const catalogHabitIds = new Set(habitCatalog.map((habit) => habit.id));
 
 export function getCatalogEntry(habitId: string) {
   return habitCatalog.find((habit) => habit.id === habitId);
+}
+
+export function getCatalogIdByLabel(label: string) {
+  return habitCatalog.find((habit) => habit.label === label)?.id ?? null;
+}
+
+export function isCatalogLabel(label: string) {
+  return habitCatalog.some((habit) => habit.label === label);
 }
 
 export function matchesFocusTopics(

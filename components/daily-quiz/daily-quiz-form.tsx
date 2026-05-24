@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { PixelAvatar } from "@/components/avatar/pixel-avatar";
@@ -16,19 +17,18 @@ import {
 import { Label } from "@/components/ui/label";
 import {
   defaultDailyQuizAnswers,
+  formatSleepHours,
+  SLEEP_HOURS_MAX,
+  SLEEP_HOURS_MIN,
+  SLEEP_HOURS_STEP,
   WELLNESS_SCALE_MAX,
   type DailyQuizAnswers,
   type DailyQuizSubmission,
 } from "@/lib/avatar-state";
 import {
-  getDailyQuizSubmission,
-  getTodayDateKey,
-  saveDailyQuizSubmission,
+  getDailyEntryForToday,
+  saveDailyEntry,
 } from "@/lib/daily-quiz-storage";
-import {
-  getJournalEntryForToday,
-  saveJournalEntry,
-} from "@/lib/journal-storage";
 
 export function DailyQuizForm() {
   const [answers, setAnswers] = useState<DailyQuizAnswers>(
@@ -44,19 +44,23 @@ export function DailyQuizForm() {
 
   useEffect(() => {
     async function loadDailyCheckIn() {
-      const existingSubmission = getDailyQuizSubmission();
-      const existingJournal = await getJournalEntryForToday();
+      try {
+        const existingEntry = await getDailyEntryForToday();
 
-      if (existingSubmission?.date === getTodayDateKey()) {
-        setSubmission(existingSubmission);
-        setAnswers(existingSubmission.answers);
+        if (existingEntry) {
+          setSubmission(existingEntry);
+          setAnswers(existingEntry.answers);
+          setJournal(existingEntry.journal);
+        }
+      } catch (loadError) {
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Could not load today's check-in.",
+        );
+      } finally {
+        setIsReady(true);
       }
-
-      if (existingJournal) {
-        setJournal(existingJournal.content);
-      }
-
-      setIsReady(true);
     }
 
     void loadDailyCheckIn();
@@ -84,9 +88,8 @@ export function DailyQuizForm() {
     setError(null);
 
     try {
-      const savedSubmission = saveDailyQuizSubmission(answers);
-      await saveJournalEntry(journal);
-      setSubmission(savedSubmission);
+      const savedEntry = await saveDailyEntry(answers, journal);
+      setSubmission(savedEntry);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -106,18 +109,77 @@ export function DailyQuizForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <Badge>Today&apos;s check-in</Badge>
-        <Badge variant={isCompleted ? "default" : "outline"}>
-          {isCompleted ? "Completed" : "Not completed"}
-        </Badge>
-      </div>
+      {isCompleted && submission ? (
+        <>
+          <Card className="border-primary/40 bg-primary/10">
+            <CardContent className="flex items-start gap-4 pt-6">
+              <div className="rounded-full bg-primary/15 p-2.5">
+                <CheckCircle2
+                  aria-hidden="true"
+                  className="h-7 w-7 text-primary"
+                />
+              </div>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold tracking-tight">
+                  Today&apos;s quiz is complete
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Your wellness check-in and journal are saved for today. You
+                  can review your answers below, and come back tomorrow for
+                  your next quiz.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Your pet today</CardTitle>
+              <CardDescription>
+                Based on the wellness check-in you already submitted.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-4">
+              <PixelAvatar mood={submission.condition.mood} size="md" />
+              <div className="grid w-full grid-cols-3 gap-2 text-center text-sm">
+                <div className="rounded-lg border bg-background px-3 py-2">
+                  <p className="text-muted-foreground">Mood</p>
+                  <p className="font-medium capitalize">
+                    {submission.condition.mood}
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-background px-3 py-2">
+                  <p className="text-muted-foreground">Energy</p>
+                  <p className="font-medium">
+                    {submission.condition.energy}/{WELLNESS_SCALE_MAX}
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-background px-3 py-2">
+                  <p className="text-muted-foreground">Health</p>
+                  <p className="font-medium">
+                    {submission.condition.health}/{WELLNESS_SCALE_MAX}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <div className="flex items-center justify-between">
+          <Badge>Today&apos;s check-in</Badge>
+          <Badge variant="outline">Not completed</Badge>
+        </div>
+      )}
+
+      <Card className={isCompleted ? "opacity-90" : undefined}>
         <CardHeader>
-          <CardTitle className="text-base">Wellness</CardTitle>
+          <CardTitle className="text-base">
+            {isCompleted ? "Your answers today" : "Wellness"}
+          </CardTitle>
           <CardDescription>
-            Sliders from 1 to 5 for how you&apos;re doing today.
+            {isCompleted
+              ? "These fields are locked until tomorrow's quiz."
+              : "Rate your wellness from 1 to 5. Sleep length uses hours."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -146,6 +208,10 @@ export function DailyQuizForm() {
             id="sleep-length"
             label="How long did you sleep?"
             value={answers.sleepLength}
+            min={SLEEP_HOURS_MIN}
+            max={SLEEP_HOURS_MAX}
+            step={SLEEP_HOURS_STEP}
+            formatValue={formatSleepHours}
             disabled={isCompleted}
             onChange={(value) => updateAnswer("sleepLength", value)}
           />
@@ -159,11 +225,13 @@ export function DailyQuizForm() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className={isCompleted ? "opacity-90" : undefined}>
         <CardHeader>
           <CardTitle className="text-base">Daily journal</CardTitle>
           <CardDescription>
-            Write about your day. Saved separately from your quiz answers.
+            {isCompleted
+              ? "Your journal entry for today."
+              : "Write about your day."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -183,37 +251,11 @@ export function DailyQuizForm() {
 
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
 
-      {isCompleted && submission ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 pt-6">
-            <PixelAvatar mood={submission.condition.mood} size="md" />
-            <div className="grid w-full grid-cols-3 gap-2 text-center text-sm">
-              <div className="rounded-lg border px-3 py-2">
-                <p className="text-muted-foreground">Mood</p>
-                <p className="font-medium capitalize">
-                  {submission.condition.mood}
-                </p>
-              </div>
-              <div className="rounded-lg border px-3 py-2">
-                <p className="text-muted-foreground">Energy</p>
-                <p className="font-medium">
-                  {submission.condition.energy}/{WELLNESS_SCALE_MAX}
-                </p>
-              </div>
-              <div className="rounded-lg border px-3 py-2">
-                <p className="text-muted-foreground">Health</p>
-                <p className="font-medium">
-                  {submission.condition.health}/{WELLNESS_SCALE_MAX}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
+      {!isCompleted ? (
         <Button className="w-full" disabled={!canSubmit} onClick={handleSubmit}>
           {isSubmitting ? "Saving..." : "Complete daily quiz"}
         </Button>
-      )}
+      ) : null}
     </div>
   );
 }
