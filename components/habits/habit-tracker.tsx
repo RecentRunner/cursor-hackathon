@@ -30,6 +30,7 @@ import {
   type Habit,
 } from "@/lib/habits-storage";
 import { formatCoinsDelta } from "@/lib/coins";
+import { describeHabitWellnessBoost } from "@/lib/habit-wellness-effects";
 import { getProfilePreferences } from "@/lib/profile-preferences-storage";
 import { hasCompletedDailyQuizToday } from "@/lib/daily-quiz-storage";
 
@@ -334,7 +335,14 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
           delete next[habitId];
           return next;
         });
-        setCoinMessage(formatCoinsDelta(coinsDelta));
+        setCoinMessage(
+          [
+            formatCoinsDelta(coinsDelta),
+            nextCompleted ? describeHabitWellnessBoost(habit.label) : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        );
       } catch (toggleError) {
         setOptimisticCompletion((current) => {
           const next = { ...current };

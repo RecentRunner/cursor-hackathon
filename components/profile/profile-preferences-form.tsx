@@ -16,6 +16,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  clearDailyReminderSentToday,
+  getNotificationPermissionLabel,
+  getNotificationPermissionState,
+  isNotificationSupported,
+  requestNotificationPermission,
+  showTestDailyReminderNotification,
+} from "@/lib/daily-reminders";
+import { getDailyReminderStatus } from "@/lib/daily-reminder-status";
+import { getTodayDateKey } from "@/lib/habits-storage";
+import {
   avatarVibeOptions,
   defaultProfilePreferences,
   focusTopicOptions,
@@ -35,6 +45,16 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState(
+    getNotificationPermissionState(),
+  );
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setNotificationPermission(getNotificationPermissionState());
+  }, []);
 
   useEffect(() => {
     async function loadPreferences() {
@@ -63,6 +83,13 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
     try {
       const savedPreferences = await saveProfilePreferences(nextPreferences);
       setPreferences(savedPreferences);
+
+      if (
+        "dailyReminderEnabled" in updates ||
+        "dailyReminderTime" in updates
+      ) {
+        clearDailyReminderSentToday(getTodayDateKey());
+      }
     } catch (saveError) {
       setPreferences(preferences);
       setError(
@@ -73,6 +100,64 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleDailyReminderToggle = async (checked: boolean) => {
+    if (checked) {
+      if (!isNotificationSupported()) {
+        setError("This browser does not support notifications.");
+        return;
+      }
+
+      const permission = await requestNotificationPermission();
+      setNotificationPermission(permission);
+
+      if (permission !== "granted") {
+        setError(
+          permission === "denied"
+            ? "Notifications are blocked. Enable them in your browser settings to use daily reminders."
+            : "Notification permission was not granted.",
+        );
+        return;
+      }
+    }
+
+    setError(null);
+    await updatePreferences({ dailyReminderEnabled: checked });
+  };
+
+  const handleTestNotification = async () => {
+    setNotificationMessage(null);
+    setError(null);
+
+    if (!isNotificationSupported()) {
+      setError("This browser does not support notifications.");
+      return;
+    }
+
+    const permission = await requestNotificationPermission();
+    setNotificationPermission(permission);
+
+    if (permission !== "granted") {
+      setError(
+        permission === "denied"
+          ? "Notifications are blocked. Enable them in your browser settings."
+          : "Notification permission was not granted.",
+      );
+      return;
+    }
+
+    const status = await getDailyReminderStatus();
+    const shown = showTestDailyReminderNotification(status);
+
+    if (!shown) {
+      setError("Could not show a test notification.");
+      return;
+    }
+
+    setNotificationMessage(
+      "Test notification sent. Check the corner of your screen or Windows notification center.",
+    );
   };
 
   if (!isReady) {
@@ -154,12 +239,18 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
             <Label htmlFor="daily-reminder">Daily reminder</Label>
             <Checkbox
               id="daily-reminder"
-              disabled={isSaving}
+              disabled={isSaving || !isNotificationSupported()}
               checked={preferences.dailyReminderEnabled}
               onCheckedChange={(checked) =>
-                void updatePreferences({ dailyReminderEnabled: checked === true })
+                void handleDailyReminderToggle(checked === true)
               }
             />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+            <span className="text-sm">Browser permission</span>
+            <Badge variant="secondary">
+              {getNotificationPermissionLabel(notificationPermission)}
+            </Badge>
           </div>
           <div className="space-y-2">
             <Label htmlFor="reminder-time">Daily reminder time</Label>
@@ -173,6 +264,26 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
               }
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Reminders use your browser&apos;s local time and notify you once
+            per day when the quiz or habits are still incomplete. Keep this app
+            open in a tab for reminders to fire. On Windows, check Focus Assist
+            if notifications are hidden.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={
+              isSaving || notificationPermission !== "granted"
+            }
+            onClick={() => void handleTestNotification()}
+          >
+            Send test notification
+          </Button>
+          {notificationMessage ? (
+            <p className="text-xs text-emerald-600">{notificationMessage}</p>
+          ) : null}
         </CardContent>
       </Card>
 

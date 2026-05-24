@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { PixelAvatar } from "@/components/avatar/pixel-avatar";
 import { WellnessSlider } from "@/components/daily-quiz/wellness-slider";
@@ -25,7 +25,9 @@ import {
   type DailyQuizAnswers,
   type DailyQuizSubmission,
 } from "@/lib/avatar-state";
+import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import {
+  getAvatarConditionForToday,
   getDailyEntryForToday,
   saveDailyEntry,
 } from "@/lib/daily-quiz-storage";
@@ -42,6 +44,13 @@ export function DailyQuizForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [liveCondition, setLiveCondition] = useState(
+    submission?.condition ?? null,
+  );
+
+  const refreshLiveCondition = useCallback(async () => {
+    setLiveCondition(await getAvatarConditionForToday());
+  }, []);
 
   useEffect(() => {
     async function loadDailyCheckIn() {
@@ -52,6 +61,9 @@ export function DailyQuizForm() {
           setSubmission(existingEntry);
           setAnswers(existingEntry.answers);
           setJournal(existingEntry.journal);
+          setLiveCondition(existingEntry.condition);
+        } else {
+          await refreshLiveCondition();
         }
       } catch (loadError) {
         setError(
@@ -65,7 +77,19 @@ export function DailyQuizForm() {
     }
 
     void loadDailyCheckIn();
-  }, []);
+  }, [refreshLiveCondition]);
+
+  useEffect(() => {
+    const handleDataUpdated = () => {
+      void refreshLiveCondition();
+    };
+
+    window.addEventListener(HABIT_PET_DATA_UPDATED_EVENT, handleDataUpdated);
+
+    return () => {
+      window.removeEventListener(HABIT_PET_DATA_UPDATED_EVENT, handleDataUpdated);
+    };
+  }, [refreshLiveCondition]);
 
   const isCompleted = submission !== null;
   const canSubmit = !isCompleted && !isSubmitting;
@@ -91,6 +115,7 @@ export function DailyQuizForm() {
     try {
       const savedEntry = await saveDailyEntry(answers, journal);
       setSubmission(savedEntry);
+      setLiveCondition(savedEntry.condition);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -137,28 +162,33 @@ export function DailyQuizForm() {
             <CardHeader>
               <CardTitle className="text-base">Your pet today</CardTitle>
               <CardDescription>
-                Based on the wellness check-in you already submitted.
+                Based on your wellness check-in and completed habits today.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
-              <PixelAvatar mood={submission.condition.mood} size="md" />
+              <PixelAvatar
+                mood={(liveCondition ?? submission.condition).mood}
+                size="md"
+              />
               <div className="grid w-full grid-cols-3 gap-2 text-center text-sm">
                 <div className="rounded-lg border bg-background px-3 py-2">
                   <p className="text-muted-foreground">Mood</p>
                   <p className="font-medium capitalize">
-                    {submission.condition.mood}
+                    {(liveCondition ?? submission.condition).mood}
                   </p>
                 </div>
                 <div className="rounded-lg border bg-background px-3 py-2">
                   <p className="text-muted-foreground">Energy</p>
                   <p className="font-medium">
-                    {submission.condition.energy}/{WELLNESS_SCALE_MAX}
+                    {(liveCondition ?? submission.condition).energy}/
+                    {WELLNESS_SCALE_MAX}
                   </p>
                 </div>
                 <div className="rounded-lg border bg-background px-3 py-2">
                   <p className="text-muted-foreground">Health</p>
                   <p className="font-medium">
-                    {submission.condition.health}/{WELLNESS_SCALE_MAX}
+                    {(liveCondition ?? submission.condition).health}/
+                    {WELLNESS_SCALE_MAX}
                   </p>
                 </div>
               </div>

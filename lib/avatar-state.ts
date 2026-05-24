@@ -54,14 +54,19 @@ function sleepHoursToWellnessScore(hours: number) {
 
 export function computeAvatarCondition(
   answers: DailyQuizAnswers,
+  taskBonuses: { health?: number; energy?: number } = {},
 ): AvatarCondition {
   const { feeling, stress, energy, sleepLength, sleepQuality } = answers;
 
   const wellnessAverage = (feeling + energy + (WELLNESS_SCALE_MAX + 1 - stress)) / 3;
   const sleepScore = sleepHoursToWellnessScore(sleepLength);
   const sleepAverage = (sleepScore + sleepQuality) / 2;
-  const health = Math.round((wellnessAverage + sleepAverage) / 2);
-  const energyLevel = Math.round((energy + sleepQuality) / 2);
+  const health = clampStat(
+    Math.round((wellnessAverage + sleepAverage) / 2) + (taskBonuses.health ?? 0),
+  );
+  const energyLevel = clampStat(
+    Math.round((energy + sleepQuality) / 2) + (taskBonuses.energy ?? 0),
+  );
 
   let avatarMood: AvatarMood = "neutral";
 
@@ -73,8 +78,8 @@ export function computeAvatarCondition(
 
   return {
     mood: avatarMood,
-    energy: clampStat(energyLevel),
-    health: clampStat(health),
+    energy: energyLevel,
+    health,
   };
 }
 

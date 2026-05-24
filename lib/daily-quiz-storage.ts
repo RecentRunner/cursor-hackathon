@@ -1,11 +1,12 @@
 import {
-  computeAvatarCondition,
   normalizeDailyQuizAnswers,
   type AvatarCondition,
   type DailyQuizAnswers,
   type DailyQuizSubmission,
 } from "@/lib/avatar-state";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
+import { computeAvatarConditionWithHabitBoosts } from "@/lib/habit-wellness-effects";
+import { getCompletedHabitLabelsForToday } from "@/lib/habits-storage";
 import { validateJournalEntry } from "@/lib/journal-safety";
 import { createClient } from "@/lib/supabase/client";
 
@@ -23,7 +24,10 @@ export function getTodayDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
-function mapRowToSubmission(row: DailyEntryRow): DailyQuizSubmission {
+function mapRowToSubmission(
+  row: DailyEntryRow,
+  completedHabitLabels: string[] = [],
+): DailyQuizSubmission {
   const answers = normalizeDailyQuizAnswers({
     feeling: row.mood,
     stress: row.stress,
@@ -36,7 +40,7 @@ function mapRowToSubmission(row: DailyEntryRow): DailyQuizSubmission {
     date: row.entry_date,
     answers,
     journal: row.journal ?? "",
-    condition: computeAvatarCondition(answers),
+    condition: computeAvatarConditionWithHabitBoosts(answers, completedHabitLabels),
   };
 }
 
@@ -83,7 +87,9 @@ export async function getDailyEntryForToday(): Promise<DailyQuizSubmission | nul
     return null;
   }
 
-  return mapRowToSubmission(row as DailyEntryRow);
+  const completedHabitLabels = await getCompletedHabitLabelsForToday();
+
+  return mapRowToSubmission(row as DailyEntryRow, completedHabitLabels);
 }
 
 export async function getDailyQuizSubmission() {
@@ -134,7 +140,10 @@ export async function saveDailyEntry(
     throw new Error(error.message);
   }
 
-  const submission = mapRowToSubmission(data as DailyEntryRow);
+  const submission = mapRowToSubmission(
+    data as DailyEntryRow,
+    await getCompletedHabitLabelsForToday(),
+  );
   notifyHabitPetDataUpdated();
   return submission;
 }
@@ -147,6 +156,17 @@ export async function saveDailyQuizSubmission(
 }
 
 export async function getAvatarConditionForToday(): Promise<AvatarCondition | null> {
-  const entry = await getDailyEntryForToday();
-  return entry?.condition ?? null;
+  const [entry, completedHabitLabels] = await Promise.all([
+    getDailyEntryForToday(),
+    getCompletedHabitLabelsForToday(),
+  ]);
+
+  if (!entry && completedHabitLabels.length === 0) {
+    return null;
+  }
+
+  return computeAvatarConditionWithHabitBoosts(
+    entry?.answers,
+    completedHabitLabels,
+  );
 }

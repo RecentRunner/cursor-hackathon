@@ -215,6 +215,47 @@ export async function getHabits(): Promise<Habit[]> {
   return rows.map(mapHabitRow);
 }
 
+export async function getCompletedHabitLabelsForToday(): Promise<string[]> {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return [];
+  }
+
+  const supabase = createClient();
+  const today = getTodayDateKey();
+
+  const { data: logs, error: logsError } = await supabase
+    .from("habit_logs")
+    .select("habit_id")
+    .eq("user_id", userId)
+    .eq("completed_on", today);
+
+  if (logsError) {
+    throw new Error(logsError.message);
+  }
+
+  const habitIds = (logs ?? []).map((log) => log.habit_id as string);
+
+  if (habitIds.length === 0) {
+    return [];
+  }
+
+  const { data: habits, error: habitsError } = await supabase
+    .from("habits")
+    .select("name")
+    .eq("user_id", userId)
+    .in("id", habitIds);
+
+  if (habitsError) {
+    throw new Error(habitsError.message);
+  }
+
+  return (habits ?? []).map((habit) =>
+    displayHabitName((habit as { name: string }).name),
+  );
+}
+
 export async function ensureCatalogHabit(catalogId: string): Promise<Habit | null> {
   const entry = getCatalogEntry(catalogId);
 
