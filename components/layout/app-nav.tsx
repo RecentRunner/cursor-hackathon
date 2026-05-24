@@ -50,7 +50,11 @@ export const AppNav = forwardRef<HTMLElement, AppNavProps>(function AppNav(
   return (
     <nav
       ref={ref}
-      className="bottom-nav fixed inset-x-0 bottom-0 z-50 border-t-2 border-border bg-background/95 shadow-[0_-4px_0_0_hsl(280_45%_28%/0.35)] backdrop-blur supports-[backdrop-filter]:bg-background/90"
+      className="bottom-nav fixed inset-x-0 z-50 border-t-2 border-border bg-background shadow-[0_-4px_0_0_hsl(280_45%_28%/0.35)]"
+      style={{
+        bottom: "var(--app-viewport-bottom-offset, 0px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
     >
       <div
         aria-hidden
@@ -58,7 +62,7 @@ export const AppNav = forwardRef<HTMLElement, AppNavProps>(function AppNav(
       />
       <div
         className={cn(
-          "mx-auto grid max-w-6xl gap-1 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2",
+          "mx-auto grid max-w-6xl gap-1 px-2 pb-2 pt-2",
           gridColsClass[columnCount],
         )}
       >

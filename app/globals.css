@@ -5,7 +5,8 @@
 @layer base {
   :root {
     --app-topbar-height: 3.5rem;
-    --app-nav-offset: var(--bottom-nav-height);
+    --app-viewport-bottom-offset: 0px;
+    --app-nav-offset: 6rem;
     --bottom-nav-height: 6rem;
     --background: 252 38% 10%;
     --foreground: 52 100% 88%;
@@ -68,6 +69,7 @@
 
   html {
     overflow-x: clip;
+    scroll-padding-bottom: var(--app-nav-offset, var(--bottom-nav-height));
   }
 
   body {
@@ -170,7 +172,14 @@
 
 @layer utilities {
   .pb-nav {
-    padding-bottom: var(--app-nav-offset);
+    padding-bottom: var(--app-nav-offset, var(--bottom-nav-height));
+  }
+
+  .pb-nav-safe {
+    padding-bottom: calc(
+      var(--app-nav-offset, var(--bottom-nav-height)) +
+        var(--app-viewport-bottom-offset, 0px)
+    );
   }
 
   .pt-topbar {

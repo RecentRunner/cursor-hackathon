@@ -46,7 +46,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         aria-live="polite"
         className="pointer-events-none fixed right-4 z-[60] flex w-[min(100vw-2rem,20rem)] flex-col gap-2"
-        style={{ bottom: "calc(var(--app-nav-offset, var(--bottom-nav-height)) + 0.75rem)" }}
+        style={{
+          bottom:
+            "calc(var(--app-viewport-bottom-offset, 0px) + var(--app-nav-offset, var(--bottom-nav-height)) + 0.75rem)",
+        }}
       >
         {messages.map((message) => (
           <div

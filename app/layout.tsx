@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Press_Start_2P } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Habit Pet",
   description: "Build habits, care for your pixel pet, and track wellness every day.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 const pixelFont = Press_Start_2P({

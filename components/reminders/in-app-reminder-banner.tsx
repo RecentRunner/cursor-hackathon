@@ -36,7 +36,10 @@ export function InAppReminderBanner() {
       role="status"
       aria-live="polite"
       className="fixed inset-x-0 z-[60] px-4 pb-[env(safe-area-inset-bottom,0px)]"
-      style={{ bottom: "calc(var(--app-nav-offset, var(--bottom-nav-height)) + 0.5rem)" }}
+      style={{
+        bottom:
+          "calc(var(--app-viewport-bottom-offset, 0px) + var(--app-nav-offset, var(--bottom-nav-height)) + 0.5rem)",
+      }}
     >
       <div className="mx-auto flex max-w-lg items-start gap-3 rounded-xl border border-primary/30 bg-card p-4 shadow-lg">
         <div className="rounded-full bg-primary/10 p-2">

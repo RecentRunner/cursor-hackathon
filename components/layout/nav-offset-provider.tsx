@@ -10,6 +10,8 @@ import {
   type Ref,
 } from "react";
 
+const NAV_OFFSET_FALLBACK = "6rem";
+
 type NavOffsetContextValue = {
   setNavElement: (element: HTMLElement | null) => void;
 };
@@ -38,6 +40,17 @@ type NavOffsetProviderProps = {
   enabled?: boolean;
 };
 
+function setNavOffset(value: string) {
+  document.documentElement.style.setProperty("--app-nav-offset", value);
+}
+
+function setViewportBottomOffset(value: string) {
+  document.documentElement.style.setProperty(
+    "--app-viewport-bottom-offset",
+    value,
+  );
+}
+
 export function NavOffsetProvider({
   children,
   enabled = true,
@@ -46,18 +59,29 @@ export function NavOffsetProvider({
   const observerRef = useRef<ResizeObserver | null>(null);
 
   const syncOffset = useCallback(() => {
-    const root = document.documentElement;
-
     if (!enabled || !navElementRef.current) {
-      root.style.setProperty("--app-nav-offset", "0px");
+      setNavOffset(enabled ? NAV_OFFSET_FALLBACK : "0px");
       return;
     }
 
-    root.style.setProperty(
-      "--app-nav-offset",
-      `${navElementRef.current.offsetHeight}px`,
-    );
+    setNavOffset(`${navElementRef.current.offsetHeight}px`);
   }, [enabled]);
+
+  const syncViewportBottom = useCallback(() => {
+    const viewport = window.visualViewport;
+
+    if (!viewport) {
+      setViewportBottomOffset("0px");
+      return;
+    }
+
+    const keyboardGap = Math.max(
+      0,
+      window.innerHeight - viewport.height - viewport.offsetTop,
+    );
+
+    setViewportBottomOffset(`${keyboardGap}px`);
+  }, []);
 
   const setNavElement = useCallback(
     (element: HTMLElement | null) => {
@@ -86,20 +110,34 @@ export function NavOffsetProvider({
 
   useEffect(() => {
     syncOffset();
+    syncViewportBottom();
+
     window.addEventListener("resize", syncOffset);
+    window.addEventListener("resize", syncViewportBottom);
+
+    const viewport = window.visualViewport;
+    viewport?.addEventListener("resize", syncViewportBottom);
+    viewport?.addEventListener("scroll", syncViewportBottom);
 
     return () => {
       window.removeEventListener("resize", syncOffset);
+      window.removeEventListener("resize", syncViewportBottom);
+      viewport?.removeEventListener("resize", syncViewportBottom);
+      viewport?.removeEventListener("scroll", syncViewportBottom);
+
       if (observerRef.current) {
         observerRef.current.disconnect();
       }
-      document.documentElement.style.setProperty("--app-nav-offset", "0px");
+
+      setNavOffset(NAV_OFFSET_FALLBACK);
+      setViewportBottomOffset("0px");
     };
-  }, [syncOffset]);
+  }, [syncOffset, syncViewportBottom]);
 
   useEffect(() => {
     if (!enabled) {
       setNavElement(null);
+      setNavOffset("0px");
     }
   }, [enabled, setNavElement]);
 
