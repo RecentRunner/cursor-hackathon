@@ -89,7 +89,6 @@ function ShopItemCard({
                 {item.price} pts
               </Badge>
             </div>
-            <p className="truncate text-[9px] text-muted-foreground">{item.id}</p>
           </div>
         </div>
 
