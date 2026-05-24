@@ -21,7 +21,21 @@ export type LayerVariant = {
   src: string;
 };
 
-export type CharacterLayerId = "skin" | "pants" | "torso" | "head" | "eyes";
+export const NONE_VARIANT_ID = "none";
+
+export const NONE_VARIANT: LayerVariant = {
+  id: NONE_VARIANT_ID,
+  label: "None",
+  src: "",
+};
+
+export type CharacterLayerId =
+  | "skin"
+  | "pants"
+  | "shoes"
+  | "torso"
+  | "eyes"
+  | "head";
 
 export type CharacterLayer = {
   id: CharacterLayerId;
@@ -45,10 +59,33 @@ function presetFromHex(id: string, name: string, hex: string): ColorPreset {
   return presetFromHsl(id, name, rgbToHsl(rgb.r, rgb.g, rgb.b));
 }
 
+function layerVariants(
+  layerId: Exclude<CharacterLayerId, "skin">,
+  label: string,
+  count: number,
+): LayerVariant[] {
+  return Array.from({ length: count }, (_, index) => {
+    const number = index + 1;
+    return {
+      id: `${layerId}-${number}`,
+      label: `${label} ${number}`,
+      src: `/character/${layerId}/${layerId}-${number}.png`,
+    };
+  });
+}
+
+function layerVariantsWithNone(
+  layerId: Exclude<CharacterLayerId, "skin">,
+  label: string,
+  count: number,
+): LayerVariant[] {
+  return [NONE_VARIANT, ...layerVariants(layerId, label, count)];
+}
+
 export const COLOR_PRESETS: ColorPreset[] = [
-  presetFromHsl("black", "Black", { h: 0, s: 0, l: 5 }),
   presetFromHsl("gray", "Gray", { h: 0, s: 0, l: 50 }),
   presetFromHsl("white", "White", { h: 0, s: 0, l: 100 }),
+  presetFromHsl("black", "Black", { h: 0, s: 0, l: 5 }),
   presetFromHex("red", "Red", "#FF2020"),
   presetFromHex("orange", "Orange", "#FF8800"),
   presetFromHex("yellow", "Yellow", "#FFD700"),
@@ -66,11 +103,14 @@ export const COLOR_PRESETS: ColorPreset[] = [
   presetFromHex("onyx", "Onyx", "#140C08"),
 ];
 
-export const DEFAULT_SKIN_COLOR =
-  COLOR_PRESETS.find((preset) => preset.id === "light")!;
+export const DEFAULT_GRAY_COLOR =
+  COLOR_PRESETS.find((preset) => preset.id === "gray")!;
+
+export const DEFAULT_SKIN_COLOR = DEFAULT_GRAY_COLOR;
 
 export const PIECE_SLOT_COUNT = 8;
 
+/** Stack order: bottom → top */
 export const CHARACTER_LAYERS: CharacterLayer[] = [
   {
     id: "skin",
@@ -84,42 +124,48 @@ export const CHARACTER_LAYERS: CharacterLayer[] = [
     id: "pants",
     label: "Pants",
     allowVariants: true,
-    variants: [],
+    variants: layerVariantsWithNone("pants", "Pants", 3),
+  },
+  {
+    id: "shoes",
+    label: "Shoes",
+    allowVariants: true,
+    variants: layerVariantsWithNone("shoes", "Shoes", 3),
   },
   {
     id: "torso",
     label: "Torso",
     allowVariants: true,
-    variants: [
-      { id: "torso-1", label: "Torso 1", src: "/character/torso/torso-1.png" },
-      { id: "torso-2", label: "Torso 2", src: "/character/torso/torso-2.png" },
-    ],
-  },
-  {
-    id: "head",
-    label: "Head",
-    allowVariants: true,
-    variants: [],
+    variants: layerVariantsWithNone("torso", "Torso", 4),
   },
   {
     id: "eyes",
     label: "Eyes",
     allowVariants: true,
-    variants: [],
+    variants: layerVariantsWithNone("eyes", "Eyes", 2),
+  },
+  {
+    id: "head",
+    label: "Head",
+    allowVariants: true,
+    variants: layerVariantsWithNone("head", "Head", 7),
   },
 ];
 
 export const LAYER_DEFAULT_COLORS: Record<CharacterLayerId, HSL> = {
-  skin: DEFAULT_SKIN_COLOR.hsl,
-  pants: COLOR_PRESETS.find((preset) => preset.id === "blue")!.hsl,
-  torso: COLOR_PRESETS.find((preset) => preset.id === "red")!.hsl,
-  head: COLOR_PRESETS.find((preset) => preset.id === "yellow")!.hsl,
-  eyes: COLOR_PRESETS.find((preset) => preset.id === "indigo")!.hsl,
+  skin: DEFAULT_GRAY_COLOR.hsl,
+  pants: DEFAULT_GRAY_COLOR.hsl,
+  shoes: DEFAULT_GRAY_COLOR.hsl,
+  torso: DEFAULT_GRAY_COLOR.hsl,
+  eyes: DEFAULT_GRAY_COLOR.hsl,
+  head: DEFAULT_GRAY_COLOR.hsl,
 };
 
 export function buildDefaultVariants(): LayerVariantState {
   return CHARACTER_LAYERS.reduce((state, layer) => {
-    state[layer.id] = layer.variants[0]?.id ?? "";
+    state[layer.id] = layer.allowVariants
+      ? NONE_VARIANT_ID
+      : (layer.variants[0]?.id ?? "");
     return state;
   }, {} as LayerVariantState);
 }
@@ -132,9 +178,15 @@ export function getSelectedVariant(
   layerId: CharacterLayerId,
   variantId: string,
 ): LayerVariant | undefined {
-  return getLayerById(layerId).variants.find(
-    (variant) => variant.id === variantId,
+  if (variantId === NONE_VARIANT_ID) return undefined;
+
+  const variant = getLayerById(layerId).variants.find(
+    (entry) => entry.id === variantId,
   );
+
+  if (!variant?.src) return undefined;
+
+  return variant;
 }
 
 /** @deprecated Use DEFAULT_SKIN_COLOR */

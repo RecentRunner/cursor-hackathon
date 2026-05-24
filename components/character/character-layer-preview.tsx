@@ -65,10 +65,22 @@ export function CharacterLayerPreview({
 
       for (const { layer, image } of images) {
         const layerColor = colors[layer.id];
+        const rgb = hslToRgb(layerColor.h, layerColor.s, layerColor.l);
+
         drawTintedSprite(
           ctx,
           image,
-          hslToRgb(layerColor.h, layerColor.s, layerColor.l),
+          rgb,
+          layer.id === "eyes"
+            ? {
+                mode: "eyes",
+                skinColor: hslToRgb(
+                  colors.skin.h,
+                  colors.skin.s,
+                  colors.skin.l,
+                ),
+              }
+            : undefined,
         );
       }
     }

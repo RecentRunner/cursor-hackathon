@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 type TintedSpriteIconProps = {
   src: string;
   color: HSL;
+  skinColor?: HSL;
   size?: number;
   className?: string;
 };
@@ -20,6 +21,7 @@ type TintedSpriteIconProps = {
 export function TintedSpriteIcon({
   src,
   color,
+  skinColor,
   size = 40,
   className,
 }: TintedSpriteIconProps) {
@@ -41,7 +43,21 @@ export function TintedSpriteIcon({
       canvas.width = image.width;
       canvas.height = image.height;
       ctx.clearRect(0, 0, image.width, image.height);
-      drawTintedSprite(ctx, image, hslToRgb(color.h, color.s, color.l));
+
+      const rgb = hslToRgb(color.h, color.s, color.l);
+      const isEyesLayer = src.includes("/character/eyes/");
+
+      drawTintedSprite(
+        ctx,
+        image,
+        rgb,
+        isEyesLayer && skinColor
+          ? {
+              mode: "eyes",
+              skinColor: hslToRgb(skinColor.h, skinColor.s, skinColor.l),
+            }
+          : undefined,
+      );
     }
 
     render();
@@ -49,7 +65,7 @@ export function TintedSpriteIcon({
     return () => {
       cancelled = true;
     };
-  }, [src, color]);
+  }, [src, color, skinColor]);
 
   return (
     <canvas

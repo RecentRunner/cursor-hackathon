@@ -128,14 +128,78 @@ export function tintImageData(imageData: ImageData, color: RGB): void {
     const alpha = data[i + 3];
     if (alpha === 0) continue;
 
-    const brightness =
-      Math.max(data[i], data[i + 1], data[i + 2]) / 255;
-
-    data[i] = Math.round(color.r * brightness);
-    data[i + 1] = Math.round(color.g * brightness);
-    data[i + 2] = Math.round(color.b * brightness);
+    applyMonochromeTint(data, i, color);
   }
 }
+
+function isWhitePixel(r: number, g: number, b: number): boolean {
+  return r >= 240 && g >= 240 && b >= 240;
+}
+
+function isMagentaPixel(r: number, g: number, b: number): boolean {
+  return r >= 200 && g <= 80 && b >= 200;
+}
+
+function applyMonochromeTint(
+  data: Uint8ClampedArray,
+  index: number,
+  color: RGB,
+  brightness?: number,
+): void {
+  const pixelBrightness =
+    brightness ??
+    Math.max(data[index], data[index + 1], data[index + 2]) / 255;
+
+  data[index] = Math.round(color.r * pixelBrightness);
+  data[index + 1] = Math.round(color.g * pixelBrightness);
+  data[index + 2] = Math.round(color.b * pixelBrightness);
+}
+
+/** Darkest shadow in the skin template — magenta maps here, not bright red. */
+const SKIN_TEMPLATE_SHADOW = hexToRgb("#330000");
+const SKIN_SHADOW_BRIGHTNESS =
+  Math.max(
+    SKIN_TEMPLATE_SHADOW.r,
+    SKIN_TEMPLATE_SHADOW.g,
+    SKIN_TEMPLATE_SHADOW.b,
+  ) / 255;
+
+/** Eyes: white stays white, magenta uses skin color, other pixels use eye color. */
+export function tintEyesImageData(
+  imageData: ImageData,
+  eyeColor: RGB,
+  skinColor: RGB,
+): void {
+  const { data } = imageData;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const alpha = data[i + 3];
+    if (alpha === 0) continue;
+
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+
+    if (isWhitePixel(r, g, b)) {
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
+      continue;
+    }
+
+    if (isMagentaPixel(r, g, b)) {
+      applyMonochromeTint(data, i, skinColor, SKIN_SHADOW_BRIGHTNESS);
+      continue;
+    }
+
+    applyMonochromeTint(data, i, eyeColor);
+  }
+}
+
+export type TintOptions = {
+  mode?: "monochrome" | "eyes";
+  skinColor?: RGB;
+};
 
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -159,6 +223,7 @@ export function drawTintedSprite(
   ctx: CanvasRenderingContext2D,
   image: HTMLImageElement,
   color: RGB,
+  options?: TintOptions,
 ): void {
   const width = image.width;
   const height = image.height;
@@ -171,7 +236,13 @@ export function drawTintedSprite(
 
   offscreenCtx.drawImage(image, 0, 0);
   const imageData = offscreenCtx.getImageData(0, 0, width, height);
-  tintImageData(imageData, color);
+
+  if (options?.mode === "eyes" && options.skinColor) {
+    tintEyesImageData(imageData, color, options.skinColor);
+  } else {
+    tintImageData(imageData, color);
+  }
+
   offscreenCtx.putImageData(imageData, 0, 0);
   ctx.drawImage(offscreen, 0, 0);
 }

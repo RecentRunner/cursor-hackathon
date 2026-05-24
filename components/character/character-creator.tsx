@@ -15,7 +15,7 @@ import { clampHsl } from "@/lib/character/color-utils";
 import {
   CHARACTER_LAYERS,
   COLOR_PRESETS,
-  DEFAULT_SKIN_COLOR,
+  DEFAULT_GRAY_COLOR,
   LAYER_DEFAULT_COLORS,
   buildDefaultVariants,
   getLayerById,
@@ -41,7 +41,7 @@ export function CharacterCreator() {
     buildDefaultVariants,
   );
   const [activePresetId, setActivePresetId] = useState<string>(
-    DEFAULT_SKIN_COLOR.id,
+    DEFAULT_GRAY_COLOR.id,
   );
   const [activeLayerId, setActiveLayerId] = useState<
     (typeof CHARACTER_LAYERS)[number]["id"]
@@ -69,7 +69,14 @@ export function CharacterCreator() {
 
   const handleLayerChange = (layerId: (typeof CHARACTER_LAYERS)[number]["id"]) => {
     setActiveLayerId(layerId);
-    setActivePresetId("");
+    const layerColor = colors[layerId];
+    const matchingPreset = COLOR_PRESETS.find(
+      (preset) =>
+        preset.hsl.h === layerColor.h &&
+        preset.hsl.s === layerColor.s &&
+        preset.hsl.l === layerColor.l,
+    );
+    setActivePresetId(matchingPreset?.id ?? "");
   };
 
   const handleVariantChange = (variantId: string) => {
@@ -107,6 +114,7 @@ export function CharacterCreator() {
                   variants={pieceVariants}
                   activeId={variants[activeLayerId]}
                   color={activeColor}
+                  skinColor={colors.skin}
                   onSelect={handleVariantChange}
                 />
               </div>
