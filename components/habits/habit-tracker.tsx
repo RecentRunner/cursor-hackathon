@@ -28,6 +28,7 @@ import {
   toggleHabitCompletion,
   type Habit,
 } from "@/lib/habits-storage";
+import { formatCoinsDelta } from "@/lib/coins";
 import { getProfilePreferences } from "@/lib/profile-preferences-storage";
 import { hasCompletedDailyQuizToday } from "@/lib/daily-quiz-storage";
 
@@ -187,6 +188,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
     () => new Set(),
   );
   const [toggleErrors, setToggleErrors] = useState<Record<string, string>>({});
+  const [coinMessage, setCoinMessage] = useState<string | null>(null);
 
   const getIsCompleted = useCallback(
     (habit: DailyTask) => {
@@ -232,6 +234,20 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
   }, []);
 
   useEffect(() => {
+    if (!coinMessage) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCoinMessage(null);
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [coinMessage]);
+
+  useEffect(() => {
     void refresh();
 
     window.addEventListener(HABIT_PET_DATA_UPDATED_EVENT, refresh);
@@ -262,7 +278,8 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
 
     void (async () => {
       try {
-        const updatedHabits = await toggleHabitCompletion(habitId);
+        const { habits: updatedHabits, coinsDelta } =
+          await toggleHabitCompletion(habitId);
 
         setDailyTasks((current) =>
           current.map((task) => {
@@ -275,6 +292,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
           delete next[habitId];
           return next;
         });
+        setCoinMessage(formatCoinsDelta(coinsDelta));
       } catch (toggleError) {
         setOptimisticCompletion((current) => {
           const next = { ...current };
@@ -416,6 +434,9 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {error ? <p className="text-sm text-red-500">{error}</p> : null}
+        {coinMessage ? (
+          <p className="text-sm font-medium text-emerald-600">{coinMessage}</p>
+        ) : null}
         <DailyTaskList
           tasks={dailyTasks}
           getIsCompleted={getIsCompleted}

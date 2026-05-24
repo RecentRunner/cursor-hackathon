@@ -4,7 +4,13 @@ import {
   getCatalogIdByLabel,
   isCatalogLabel,
 } from "@/lib/habit-catalog";
+import { adjustCoins } from "@/lib/avatar-progression-storage";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
+import {
+  COINS_PER_TASK_COMPLETE,
+  COINS_PER_TASK_UNCHECK,
+  getStreakMilestoneBonus,
+} from "@/lib/coins";
 import { createClient } from "@/lib/supabase/client";
 
 export type Habit = {
@@ -16,12 +22,21 @@ export type Habit = {
   isCustom: boolean;
 };
 
+export type ToggleHabitResult = {
+  habits: Habit[];
+  coinsDelta: number;
+};
+
 type HabitRow = {
   id: string;
   name: string;
   streak: number;
   last_completed_on: string | null;
+  claimed_streak_milestones?: number[];
 };
+
+const habitSelectFields =
+  "id, name, streak, last_completed_on, claimed_streak_milestones";
 
 export function getTodayDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
@@ -81,7 +96,7 @@ async function findActiveHabitByName(
   const supabase = createClient();
   const { data, error } = await supabase
     .from("habits")
-    .select("id, name, streak, last_completed_on")
+    .select(habitSelectFields)
     .eq("user_id", userId)
     .eq("name", name)
     .eq("active", true)
@@ -125,13 +140,16 @@ async function reconcileMissedDayStreaks(
 
   await Promise.all(
     habitsToReset.map((habit) =>
-      supabase.from("habits").update({ streak: 0 }).eq("id", habit.id),
+      supabase
+        .from("habits")
+        .update({ streak: 0, claimed_streak_milestones: [] })
+        .eq("id", habit.id),
     ),
   );
 
   return habits.map((habit) =>
     habitsToReset.some((item) => item.id === habit.id)
-      ? { ...habit, streak: 0 }
+      ? { ...habit, streak: 0, claimed_streak_milestones: [] }
       : habit,
   );
 }
@@ -172,7 +190,7 @@ export async function getHabits(): Promise<Habit[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("habits")
-    .select("id, name, streak, last_completed_on")
+    .select(habitSelectFields)
     .eq("user_id", userId)
     .eq("active", true)
     .order("created_at", { ascending: true });
@@ -213,7 +231,7 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
         active: true,
         streak: 0,
       })
-      .select("id, name, streak, last_completed_on")
+      .select(habitSelectFields)
       .single();
 
     if (insertError) {
@@ -231,11 +249,13 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
   return mapHabitRow(reconciledRow);
 }
 
-export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
+export async function toggleHabitCompletion(
+  habitId: string,
+): Promise<ToggleHabitResult> {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
-    return [];
+    return { habits: [], coinsDelta: 0 };
   }
 
   const supabase = createClient();
@@ -243,7 +263,7 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
 
   const { data: habit, error: habitError } = await supabase
     .from("habits")
-    .select("id, name, streak, last_completed_on")
+    .select(habitSelectFields)
     .eq("id", habitId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -271,6 +291,7 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
   }
 
   const existingLog = getFirstRow(existingLogs as { id: string }[] | null);
+  let coinsDelta = 0;
 
   if (existingLog) {
     const { error: deleteError } = await supabase
@@ -299,6 +320,8 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
     if (updateError) {
       throw new Error(updateError.message);
     }
+
+    coinsDelta = COINS_PER_TASK_UNCHECK;
   } else {
     const { error: insertError } = await supabase.from("habit_logs").insert({
       user_id: userId,
@@ -311,12 +334,20 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
     }
 
     const nextStreak = currentStreak + 1;
+    const claimedMilestones = reconciledHabit.claimed_streak_milestones ?? [];
+    const milestoneBonus = getStreakMilestoneBonus(nextStreak);
+    const earnedMilestoneBonus =
+      milestoneBonus !== null && !claimedMilestones.includes(nextStreak);
+    const nextClaimedMilestones = earnedMilestoneBonus
+      ? [...claimedMilestones, nextStreak]
+      : claimedMilestones;
 
     const { error: updateError } = await supabase
       .from("habits")
       .update({
         streak: nextStreak,
         last_completed_on: today,
+        claimed_streak_milestones: nextClaimedMilestones,
       })
       .eq("id", habitId)
       .eq("user_id", userId);
@@ -324,10 +355,15 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
     if (updateError) {
       throw new Error(updateError.message);
     }
+
+    coinsDelta =
+      COINS_PER_TASK_COMPLETE + (earnedMilestoneBonus ? milestoneBonus : 0);
   }
 
+  await adjustCoins(coinsDelta);
+
   notifyHabitPetDataUpdated();
-  return getHabits();
+  return { habits: await getHabits(), coinsDelta };
 }
 
 export async function addHabit(label: string): Promise<Habit[]> {
