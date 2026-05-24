@@ -226,7 +226,7 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
   }
 
   const [reconciledHabit] = await reconcileMissedDayStreaks([habit as HabitRow]);
-  let currentStreak = reconciledHabit.streak;
+  const currentStreak = reconciledHabit.streak;
 
   const { data: existingLog, error: existingLogError } = await supabase
     .from("habit_logs")
