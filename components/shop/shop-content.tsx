@@ -84,7 +84,7 @@ function ShopItemCard({
                 <img
                   src={item.image_path}
                   alt=""
-                  className="size-full object-cover"
+                  className="size-full object-cover image-pixelated"
                 />
               ) : (
                 <div className={cn("size-full", room.previewClassName)} />

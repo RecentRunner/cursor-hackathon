@@ -73,7 +73,16 @@ export function RoomBackgroundPicker({
                   : "opacity-80 hover:-translate-y-0.5",
               )}
             >
-              <div className={cn("absolute inset-0", room.previewClassName)} />
+              {room.sceneImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={room.sceneImage}
+                  alt=""
+                  className="absolute inset-0 size-full object-cover image-pixelated"
+                />
+              ) : (
+                <div className={cn("absolute inset-0", room.previewClassName)} />
+              )}
               <p className="absolute inset-x-0 bottom-0 bg-black/55 px-1.5 py-1 text-left text-[8px] uppercase tracking-wider text-foreground">
                 {room.name}
               </p>
