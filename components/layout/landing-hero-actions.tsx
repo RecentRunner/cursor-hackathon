@@ -11,7 +11,7 @@ export async function LandingHeroActions() {
     return (
       <div className="flex flex-wrap gap-3">
         <Button asChild size="lg">
-          <Link href={routes.avatar}>Go to your pet</Link>
+          <Link href={routes.avatar}>Go to your bit</Link>
         </Button>
       </div>
     );

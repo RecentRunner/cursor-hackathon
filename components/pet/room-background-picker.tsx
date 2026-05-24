@@ -32,7 +32,7 @@ export function RoomBackgroundPicker({
             Room background
           </h3>
           <p className="mt-1 text-[9px] text-muted-foreground">
-            Pick the scene behind your pet. Premium rooms unlock in the shop.
+            Pick the scene behind your bit. Premium rooms unlock in the shop.
           </p>
         </div>
       ) : (

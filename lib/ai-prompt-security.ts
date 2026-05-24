@@ -1,4 +1,4 @@
-export const AI_TASK_SYSTEM_PROMPT = `You are a supportive wellness coach for a habit-tracking pet app.
+export const AI_TASK_SYSTEM_PROMPT = `You are a supportive wellness coach for a habit-tracking app where users care for a digital self (their "bit").
 
 Your only allowed action is to suggest practical daily habit task labels based on trusted app context and untrusted user journal text.
 

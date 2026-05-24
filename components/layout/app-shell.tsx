@@ -1,5 +1,4 @@
 import { AppPageHeader } from "@/components/layout/app-page-header";
-import { AppTopBar } from "@/components/layout/app-top-bar";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -27,8 +26,7 @@ export function AppShell({
   centered = false,
 }: AppShellProps) {
   return (
-    <div className="relative flex min-h-dvh flex-col bg-background pt-topbar">
-      <AppTopBar />
+    <div className="relative flex flex-1 flex-col bg-background">
       <main
         className={cn(
           "mx-auto flex w-full flex-1 flex-col px-4 py-6 lg:px-5",

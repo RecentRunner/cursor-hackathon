@@ -60,7 +60,7 @@ export function formatAiTaskContextForPrompt(context: AiTaskContext) {
       `Daily reminder enabled: ${preferences.dailyReminderEnabled ? "yes" : "no"}`,
       `Daily reminder time: ${preferences.dailyReminderTime}`,
       `Primary focus: ${onboarding.focusTopic ?? "unknown"}`,
-      `Starter pet vibe: ${onboarding.avatarVibe ?? "unknown"}`,
+      `Starter bit vibe: ${onboarding.avatarVibe ?? "unknown"}`,
     ].join("\n"),
   );
 

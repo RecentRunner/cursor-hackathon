@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Coins, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -87,7 +87,7 @@ export function ShopItemPreviewModal({
               id="shop-preview-title"
               className="text-[10px] uppercase tracking-wider text-muted-foreground"
             >
-              Preview on your pet
+              Preview on your bit
             </p>
             <p className="mt-1 truncate text-sm">{item.name}</p>
           </div>
@@ -119,13 +119,16 @@ export function ShopItemPreviewModal({
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-8 bg-gradient-to-t from-black/35 to-transparent" />
           </div>
           <p className="mt-3 text-center text-[10px] text-muted-foreground">
-            Preview only — nothing is purchased or equipped until you confirm.
+            This is a preview only. Nothing is purchased or equipped until you confirm.
           </p>
 
           <div className="mt-4 grid gap-2 border-t-2 border-border pt-4">
-            <div className="flex items-center justify-between gap-3 text-xs">
-              <span className="text-muted-foreground">Price</span>
-              <span>{item.price} points</span>
+            <div className="flex items-center justify-end gap-1.5 border-2 border-primary/30 bg-primary/5 px-3 py-2.5">
+              <Coins aria-hidden="true" className="size-4 text-primary" />
+              <span className="text-xl font-bold tabular-nums text-primary">
+                {item.price}
+              </span>
+              <span className="text-sm text-muted-foreground">points</span>
             </div>
 
             {owned ? (

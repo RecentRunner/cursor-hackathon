@@ -59,7 +59,7 @@ export function InAppReminderBanner() {
                 router.push(reminder.targetUrl);
               }}
             >
-              Open Pet tab
+              Open Bit tab
             </Button>
             <Button
               type="button"

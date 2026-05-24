@@ -1,38 +1,38 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { AuthButton } from "@/components/auth-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { HabitBrand } from "@/components/layout/habit-brand";
+import { HeaderCoinBalance } from "@/components/layout/header-coin-balance";
 import { routes } from "@/lib/routes";
 import { hasEnvVars } from "@/lib/utils";
 
 export function SiteHeader() {
   return (
-    <header className="w-full border-b border-b-foreground/10">
-      <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-5 text-sm">
-        <Link href={routes.home} className="font-pixel text-xs tracking-tight">
-          HaBit
-        </Link>
-        {!hasEnvVars ? (
-          <EnvVarWarning />
-        ) : (
-          <Suspense>
-            <AuthButton />
-          </Suspense>
-        )}
+    <header
+      className="fixed inset-x-0 top-0 z-40 border-b border-border/50 bg-background"
+      style={{
+        height: "var(--app-topbar-height)",
+        paddingTop: "env(safe-area-inset-top, 0px)",
+      }}
+    >
+      <div className="mx-auto flex h-full w-full max-w-5xl items-center justify-between gap-4 px-5">
+        <HabitBrand href={routes.home} size="nav" framed={false} />
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {!hasEnvVars ? (
+            <EnvVarWarning />
+          ) : (
+            <>
+              <Suspense fallback={null}>
+                <HeaderCoinBalance />
+              </Suspense>
+              <Suspense fallback={null}>
+                <AuthButton />
+              </Suspense>
+            </>
+          )}
+        </div>
       </div>
     </header>
-  );
-}
-
-export function SiteFooter() {
-  return (
-    <footer className="w-full border-t py-8 text-center text-xs text-muted-foreground">
-      <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-5">
-        <p>Build habits. Care for your pet. Feel better every day.</p>
-        <ThemeSwitcher />
-      </div>
-    </footer>
   );
 }

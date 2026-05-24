@@ -26,6 +26,7 @@ export function CustomizePageContent() {
   const [shopItems, setShopItems] = useState<ShopItemRecord[]>([]);
   const [coins, setCoins] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
 
   const loadCustomization = useCallback(async () => {
     try {
@@ -46,6 +47,7 @@ export function CustomizePageContent() {
       setEquippedItems(inventory.equippedItems);
       setShopItems(inventory.items);
       setCoins(inventory.coins);
+      setEditorKey((current) => current + 1);
     } catch (error) {
       setLoadError(
         error instanceof Error ? error.message : "Could not load your avatar.",
@@ -93,7 +95,7 @@ export function CustomizePageContent() {
 
   return (
     <CharacterCreator
-      key={`${customization.variants.head}-${customization.variants.torso}-${customization.colors.skin.l}-${customization.roomBackground}-${avatarName}-${ownedVariantIds.join(",")}`}
+      key={editorKey}
       initialCustomization={{
         ...customization,
         name: avatarName,

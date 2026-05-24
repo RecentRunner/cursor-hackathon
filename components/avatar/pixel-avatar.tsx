@@ -29,7 +29,7 @@ export function PixelAvatar({
   return (
     <div
       className={cn("flex flex-col items-center gap-3", className)}
-      aria-label={`Pixel pet avatar, mood ${mood}`}
+      aria-label={`Bit avatar, mood ${mood}`}
     >
       <div
         className={cn(

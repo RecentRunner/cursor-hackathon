@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { AppNav } from "@/components/layout/app-nav";
 import { AppDataPrefetcher } from "@/components/layout/app-data-prefetcher";
+import { AuthBottomNav } from "@/components/layout/auth-bottom-nav";
 import {
   NavOffsetProvider,
   useNavOffsetRef,
@@ -12,14 +13,20 @@ import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import { getOnboardingStatusClient } from "@/lib/onboarding-status";
 import { createClient } from "@/lib/supabase/client";
 
+type NavKind = "none" | "auth" | "app";
+
 function MeasuredAppNav() {
   const navRef = useNavOffsetRef();
-
   return <AppNav ref={navRef} />;
 }
 
+function MeasuredAuthNav() {
+  const navRef = useNavOffsetRef();
+  return <AuthBottomNav ref={navRef} />;
+}
+
 export function GlobalBottomNav() {
-  const [showNav, setShowNav] = useState(false);
+  const [navKind, setNavKind] = useState<NavKind>("none");
 
   useEffect(() => {
     const supabase = createClient();
@@ -30,12 +37,12 @@ export function GlobalBottomNav() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        setShowNav(false);
+        setNavKind("auth");
         return;
       }
 
       const status = await getOnboardingStatusClient();
-      setShowNav(status?.appComplete === true);
+      setNavKind(status?.appComplete === true ? "app" : "none");
     }
 
     void syncNavState();
@@ -55,9 +62,10 @@ export function GlobalBottomNav() {
   }, []);
 
   return (
-    <NavOffsetProvider enabled={showNav}>
-      <AppDataPrefetcher enabled={showNav} />
-      {showNav ? <MeasuredAppNav /> : null}
+    <NavOffsetProvider enabled={navKind !== "none"}>
+      <AppDataPrefetcher enabled={navKind === "app"} />
+      {navKind === "app" ? <MeasuredAppNav /> : null}
+      {navKind === "auth" ? <MeasuredAuthNav /> : null}
     </NavOffsetProvider>
   );
 }

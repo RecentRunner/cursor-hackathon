@@ -161,12 +161,12 @@ export function DailyQuizForm() {
               </p>
               <p className="text-sm text-muted-foreground">
                 Your answers are saved below. Come back tomorrow for your next
-                check-in. How you did today affects your pet. Spend time with{" "}
+                check-in. How you did today affects your bit. Spend time with{" "}
                 <Link
                   href={routes.avatar}
                   className="font-medium text-primary underline-offset-2 hover:underline"
                 >
-                  your pet
+                  your bit
                 </Link>{" "}
                 whenever you want to see how they are doing.
               </p>

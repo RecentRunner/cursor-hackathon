@@ -1,5 +1,4 @@
 import { AppPageHeader } from "@/components/layout/app-page-header";
-import { AppTopBar } from "@/components/layout/app-top-bar";
 
 type AvatarCustomizeLayoutProps = {
   eyebrow?: string;
@@ -15,9 +14,7 @@ export function AvatarCustomizeLayout({
   children,
 }: AvatarCustomizeLayoutProps) {
   return (
-    <div className="relative min-h-dvh bg-background pt-topbar">
-      <AppTopBar />
-
+    <div className="relative min-h-dvh flex-1 bg-background">
       <main className="mx-auto max-w-lg px-4 py-6 lg:max-w-6xl lg:px-5">
         <AppPageHeader
           eyebrow={eyebrow}

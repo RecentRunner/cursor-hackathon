@@ -1,9 +1,9 @@
 "use client";
 
+import { Coins } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { TintedSpriteIcon } from "@/components/character/tinted-sprite-icon";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast-provider";
@@ -24,9 +24,47 @@ import {
   type ShopItemRecord,
   type ShopLayerId,
 } from "@/lib/shop-catalog";
+import { ShopItemPreviewModal } from "@/components/shop/shop-item-preview-modal";
 import { cn } from "@/lib/utils";
 
-import { ShopItemPreviewModal } from "@/components/shop/shop-item-preview-modal";
+function ShopItemPriceBadge({
+  price,
+  owned,
+  equipped,
+}: {
+  price: number;
+  owned: boolean;
+  equipped?: boolean;
+}) {
+  const boxClassName =
+    "inline-flex shrink-0 items-center justify-center gap-2.5 border-2 px-5 font-pixel text-[13px] font-normal uppercase tracking-wide leading-none shadow-[var(--retro-shadow-sm)] h-12";
+
+  if (owned) {
+    return (
+      <div
+        className={cn(
+          boxClassName,
+          "border-border/60 bg-muted/30 text-muted-foreground",
+        )}
+      >
+        {equipped ? "Equipped" : "Owned"}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        boxClassName,
+        "border-primary/35 bg-primary/10 text-primary",
+      )}
+    >
+      <Coins aria-hidden="true" className="size-5 shrink-0" />
+      <span className="tabular-nums">{price}</span>
+      <span className="text-primary/80">pts</span>
+    </div>
+  );
+}
 
 const SHOP_LAYER_ORDER: ShopLayerId[] = [
   "head",
@@ -94,13 +132,15 @@ function ShopItemCard({
             )}
           </div>
 
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex items-start justify-between gap-2">
-              <p className="min-w-0 flex-1 text-xs leading-snug">{item.name}</p>
-              <Badge className="shrink-0 px-1.5 py-0.5 text-[8px]">
-                {item.price} pts
-              </Badge>
-            </div>
+          <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
+            <p className="min-w-0 pt-1 text-sm font-medium leading-snug">
+              {item.name}
+            </p>
+            <ShopItemPriceBadge
+              price={item.price}
+              owned={owned}
+              equipped={equipped}
+            />
           </div>
         </div>
 
@@ -287,15 +327,6 @@ export function ShopContent() {
         }}
       />
 
-      <div className="mb-5 flex items-center justify-between gap-3 border-2 border-border bg-muted/40 px-4 py-3 shadow-[var(--retro-shadow-sm)]">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Your balance
-        </span>
-        <Badge variant="secondary" className="shrink-0">
-          {coins === null ? "..." : `${coins} points`}
-        </Badge>
-      </div>
-
       {error ? <p className="mb-4 text-xs text-red-500">{error}</p> : null}
 
       {!error && coins !== null && items.length === 0 ? (
@@ -312,7 +343,7 @@ export function ShopContent() {
       <div className="grid gap-8">
         {roomItems.length > 0 ? (
           <section className="grid gap-3">
-            <h3 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Room backgrounds
             </h3>
             <div className={itemGridClassName}>
@@ -335,7 +366,7 @@ export function ShopContent() {
 
         {styleGroups.map((group) => (
           <section key={group.layerId} className="grid gap-3">
-            <h3 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {group.label}
             </h3>
             <div className={itemGridClassName}>

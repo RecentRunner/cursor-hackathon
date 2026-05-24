@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast-provider";
-import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
+import {
+  DEFAULT_AVATAR_NAME,
+  type AvatarCustomization,
+} from "@/lib/avatar-customization-storage";
 import { clampHsl } from "@/lib/character/color-utils";
 import {
   COLOR_PRESETS,
@@ -47,7 +50,7 @@ import {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
       {children}
     </h3>
   );
@@ -84,7 +87,7 @@ export function CharacterCreator({
 }: CharacterCreatorProps) {
   const { toast } = useToast();
   const [internalName, setInternalName] = useState(
-    initialCustomization?.name ?? "Pixel Me",
+    initialCustomization?.name ?? DEFAULT_AVATAR_NAME,
   );
   const name = controlledName ?? internalName;
 
@@ -355,12 +358,12 @@ export function CharacterCreator({
       <div className="tamagotchi-shell overflow-hidden p-3 sm:p-4">
       {showNameField ? (
         <div className="mb-4 grid max-w-md gap-2 border-b-2 border-border/60 pb-4">
-          <Label htmlFor="avatar-name">Pet name</Label>
+          <Label htmlFor="avatar-name">Bit name</Label>
           <Input
             id="avatar-name"
             value={name}
             maxLength={32}
-            placeholder="Name your pet"
+            placeholder="Name your bit"
             onChange={(event) => setName(event.target.value)}
           />
         </div>
@@ -368,8 +371,8 @@ export function CharacterCreator({
 
       <CharacterLayerTabs activeTabId={activeTabId} onTabChange={handleTabChange} />
 
-      <div className="customize-body mt-4 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-5">
-        <div className="flex min-h-full min-w-0 flex-col">
+      <div className="customize-body mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-5">
+        <div className="flex min-w-0 flex-col">
           <div className="tamagotchi-lcd tamagotchi-lcd-pet-match relative">
             <ParallaxRoomBackground roomId={displayCustomization.roomBackground} />
             <div className="relative z-10 flex h-full items-center justify-center">
@@ -386,7 +389,7 @@ export function CharacterCreator({
           </div>
         </div>
 
-        <div className="flex min-h-full min-w-0 flex-col gap-5 border-t-2 border-border/60 pt-4 lg:border-l-2 lg:border-t-0 lg:pl-5 lg:pt-0">
+        <div className="flex min-w-0 flex-col gap-5 border-t-2 border-border/60 pt-4 lg:border-l-2 lg:border-t-0 lg:pl-5 lg:pt-0">
           {showStyleSection ? (
             <section className="grid shrink-0 gap-3">
               <SectionLabel>Style</SectionLabel>
@@ -437,7 +440,7 @@ export function CharacterCreator({
           ) : null}
 
           {onSave ? (
-            <div className="mt-auto grid gap-2 pt-1">
+            <div className="grid gap-2 pt-2">
               <Button
                 id="avatar-customization-save"
                 type="button"

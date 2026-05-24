@@ -41,7 +41,7 @@ export function AvatarPageContent() {
 
   if (!customization) {
     return (
-      <p className="text-xs text-muted-foreground">Loading your pet...</p>
+      <p className="text-xs text-muted-foreground">Loading your bit...</p>
     );
   }
 

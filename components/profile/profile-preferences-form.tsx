@@ -266,7 +266,7 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
         <CardHeader>
           <CardTitle className="text-base">Focus topic preference</CardTitle>
           <CardDescription>
-            Choose the one area you want your pet and daily tasks to focus on.
+            Choose the one area you want your bit and daily tasks to focus on.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -288,7 +288,7 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Avatar preferences</CardTitle>
-          <CardDescription>Personalize your pet&apos;s vibe.</CardDescription>
+          <CardDescription>Personalize your bit&apos;s vibe.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           {avatarVibeOptions.map((vibe) => (
@@ -369,7 +369,7 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            In-app reminders appear inside Habit Pet while a tab is open.
+            In-app reminders appear inside HaBit while a tab is open.
             Browser (OS) reminders use the Web Notifications API and may appear
             in your system notification center. Reminders fire once per day at
             your chosen local time.

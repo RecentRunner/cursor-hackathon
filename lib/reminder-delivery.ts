@@ -3,7 +3,7 @@ export const reminderDeliveryOptions = [
     value: "in_app",
     label: "In-app",
     description:
-      "Show reminders inside Habit Pet when you have the site open in a tab.",
+      "Show reminders inside HaBit when you have the site open in a tab.",
   },
   {
     value: "system",
