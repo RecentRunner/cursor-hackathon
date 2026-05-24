@@ -94,7 +94,7 @@ export function CharacterPieceSelector({
             className={cn(
               "relative flex size-14 items-center justify-center rounded-lg border bg-zinc-950/80 p-1.5 transition-colors",
               locked
-                ? "border-border/40 opacity-80 hover:border-border hover:bg-zinc-900/60"
+                ? "border-border/40 hover:border-border hover:bg-zinc-900/60"
                 : activeId === variant.id
                   ? "border-foreground bg-zinc-900 shadow-[inset_0_0_0_1px_hsl(var(--foreground)/0.15)]"
                   : "border-border/60 hover:border-border hover:bg-zinc-900/60",
@@ -109,9 +109,11 @@ export function CharacterPieceSelector({
             {locked ? (
               <span
                 aria-hidden
-                className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/75"
+                className="absolute inset-0 flex items-center justify-center rounded-lg"
               >
-                <Lock className="size-4 text-muted-foreground" strokeWidth={2.25} />
+                <span className="rounded bg-black/50 p-1">
+                  <Lock className="size-4 text-white" strokeWidth={2.25} />
+                </span>
               </span>
             ) : null}
           </button>

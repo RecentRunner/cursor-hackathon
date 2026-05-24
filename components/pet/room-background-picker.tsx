@@ -68,9 +68,7 @@ export function RoomBackgroundPicker({
                 selected
                   ? "border-secondary shadow-[0_0_0_2px_hsl(var(--secondary)/0.35)]"
                   : "border-border/70",
-                unlocked
-                  ? "hover:-translate-y-0.5"
-                  : "opacity-80 hover:-translate-y-0.5",
+                "hover:-translate-y-0.5",
               )}
             >
               {room.sceneImage ? (
@@ -87,8 +85,10 @@ export function RoomBackgroundPicker({
                 {room.name}
               </p>
               {!unlocked ? (
-                <span className="absolute inset-0 flex items-center justify-center bg-background/55">
-                  <Lock className="size-4 text-muted-foreground" strokeWidth={2.25} />
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="rounded bg-black/50 p-1">
+                    <Lock className="size-4 text-white" strokeWidth={2.25} />
+                  </span>
                 </span>
               ) : null}
             </button>

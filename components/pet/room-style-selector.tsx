@@ -64,7 +64,7 @@ export function RoomStyleSelector({
             className={cn(
               "relative size-14 overflow-hidden rounded-lg border transition-colors",
               locked
-                ? "border-border/40 opacity-80 hover:border-border"
+                ? "border-border/40 hover:border-border"
                 : activeId === room.id
                   ? "border-foreground shadow-[inset_0_0_0_1px_hsl(var(--foreground)/0.15)]"
                   : "border-border/60 hover:border-border",
@@ -83,9 +83,11 @@ export function RoomStyleSelector({
             {locked ? (
               <span
                 aria-hidden
-                className="absolute inset-0 flex items-center justify-center bg-background/75"
+                className="absolute inset-0 flex items-center justify-center"
               >
-                <Lock className="size-4 text-muted-foreground" strokeWidth={2.25} />
+                <span className="rounded bg-black/50 p-1">
+                  <Lock className="size-4 text-white" strokeWidth={2.25} />
+                </span>
               </span>
             ) : null}
           </button>
