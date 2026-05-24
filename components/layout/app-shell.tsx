@@ -10,8 +10,8 @@ type AppShellProps = {
 };
 
 const contentWidthClass = {
-  default: "max-w-lg md:max-w-2xl lg:max-w-4xl",
-  wide: "max-w-lg md:max-w-3xl lg:max-w-6xl",
+  default: "max-w-lg lg:max-w-4xl",
+  wide: "max-w-lg lg:max-w-6xl",
 } as const;
 
 export function AppShell({
@@ -25,7 +25,7 @@ export function AppShell({
       <AppTopBar />
       <main
         className={cn(
-          "mx-auto px-4 py-6 md:px-5",
+          "mx-auto px-4 py-6 lg:px-5",
           wide ? contentWidthClass.wide : contentWidthClass.default,
         )}
       >
