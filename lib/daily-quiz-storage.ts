@@ -6,69 +6,142 @@ import {
   type DailyQuizSubmission,
 } from "@/lib/avatar-state";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
-const STORAGE_KEY = "habit-pet-daily-quiz";
+import { createClient } from "@/lib/supabase/client";
+
+type DailyEntryRow = {
+  entry_date: string;
+  mood: number;
+  stress: number;
+  energy: number;
+  sleep_hours: number;
+  sleep_quality: number;
+  journal: string | null;
+};
 
 export function getTodayDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
-function normalizeSubmission(
-  submission: DailyQuizSubmission,
-): DailyQuizSubmission {
-  const answers = normalizeDailyQuizAnswers(submission.answers);
+function mapRowToSubmission(row: DailyEntryRow): DailyQuizSubmission {
+  const answers = normalizeDailyQuizAnswers({
+    feeling: row.mood,
+    stress: row.stress,
+    energy: row.energy,
+    sleepLength: Number(row.sleep_hours),
+    sleepQuality: row.sleep_quality,
+  });
 
   return {
-    ...submission,
+    date: row.entry_date,
     answers,
+    journal: row.journal ?? "",
     condition: computeAvatarCondition(answers),
   };
 }
 
-export function getDailyQuizSubmission(): DailyQuizSubmission | null {
-  if (typeof window === "undefined") {
+async function getAuthenticatedUserId() {
+  const supabase = createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
     return null;
   }
 
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return normalizeSubmission(JSON.parse(raw) as DailyQuizSubmission);
-  } catch {
-    return null;
-  }
+  return user.id;
 }
 
-export function hasCompletedDailyQuizToday() {
-  const submission = getDailyQuizSubmission();
-  return submission?.date === getTodayDateKey();
+export async function getDailyEntryForToday(): Promise<DailyQuizSubmission | null> {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
+  const supabase = createClient();
+  const entryDate = getTodayDateKey();
+  const { data, error } = await supabase
+    .from("daily_entries")
+    .select(
+      "entry_date, mood, stress, energy, sleep_hours, sleep_quality, journal",
+    )
+    .eq("user_id", userId)
+    .eq("entry_date", entryDate)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapRowToSubmission(data as DailyEntryRow);
 }
 
-export function saveDailyQuizSubmission(
+export async function getDailyQuizSubmission() {
+  return getDailyEntryForToday();
+}
+
+export async function hasCompletedDailyQuizToday() {
+  const entry = await getDailyEntryForToday();
+  return entry !== null;
+}
+
+export async function saveDailyEntry(
   answers: DailyQuizAnswers,
-): DailyQuizSubmission {
-  const submission: DailyQuizSubmission = {
-    date: getTodayDateKey(),
-    answers,
-    condition: computeAvatarCondition(answers),
-  };
+  journal: string,
+): Promise<DailyQuizSubmission> {
+  const userId = await getAuthenticatedUserId();
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(submission));
+  if (!userId) {
+    throw new Error("You must be signed in to save your daily check-in.");
+  }
 
+  const supabase = createClient();
+  const entryDate = getTodayDateKey();
+  const normalizedAnswers = normalizeDailyQuizAnswers(answers);
+
+  const { data, error } = await supabase
+    .from("daily_entries")
+    .upsert(
+      {
+        user_id: userId,
+        entry_date: entryDate,
+        mood: normalizedAnswers.feeling,
+        stress: normalizedAnswers.stress,
+        energy: normalizedAnswers.energy,
+        sleep_hours: normalizedAnswers.sleepLength,
+        sleep_quality: normalizedAnswers.sleepQuality,
+        journal,
+      },
+      { onConflict: "user_id,entry_date" },
+    )
+    .select(
+      "entry_date, mood, stress, energy, sleep_hours, sleep_quality, journal",
+    )
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const submission = mapRowToSubmission(data as DailyEntryRow);
   notifyHabitPetDataUpdated();
-
   return submission;
 }
 
-export function getAvatarConditionForToday(): AvatarCondition | null {
-  const submission = getDailyQuizSubmission();
+export async function saveDailyQuizSubmission(
+  answers: DailyQuizAnswers,
+  journal = "",
+) {
+  return saveDailyEntry(answers, journal);
+}
 
-  if (!submission || submission.date !== getTodayDateKey()) {
-    return null;
-  }
-
-  return submission.condition;
+export async function getAvatarConditionForToday(): Promise<AvatarCondition | null> {
+  const entry = await getDailyEntryForToday();
+  return entry?.condition ?? null;
 }

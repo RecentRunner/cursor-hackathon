@@ -1,5 +1,5 @@
 import type { DailyQuizAnswers } from "@/lib/avatar-state";
-import { getDailyQuizSubmission, getTodayDateKey } from "@/lib/daily-quiz-storage";
+import { getDailyEntryForToday } from "@/lib/daily-quiz-storage";
 import {
   catalogHabitIds,
   getCatalogEntry,
@@ -23,14 +23,9 @@ export type DailyTask = Habit & {
   reason: DailyTaskReason;
 };
 
-function getQuizAnswersForToday(): DailyQuizAnswers | null {
-  const submission = getDailyQuizSubmission();
-
-  if (!submission || submission.date !== getTodayDateKey()) {
-    return null;
-  }
-
-  return submission.answers;
+async function getQuizAnswersForToday(): Promise<DailyQuizAnswers | null> {
+  const entry = await getDailyEntryForToday();
+  return entry?.answers ?? null;
 }
 
 function getCatalogTaskReason(
@@ -54,7 +49,7 @@ function getCatalogTaskReason(
 
 export async function getDailyTasks(): Promise<DailyTask[]> {
   const preferences = getProfilePreferences();
-  const quizAnswers = getQuizAnswersForToday();
+  const quizAnswers = await getQuizAnswersForToday();
 
   const selectedCatalogIds = habitCatalog
     .map((entry) => {

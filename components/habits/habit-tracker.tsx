@@ -168,7 +168,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       setDailyTasks(tasks);
       setCustomHabits(customs);
       setFocusTopics(getProfilePreferences().focusTopics);
-      setQuizCompletedToday(hasCompletedDailyQuizToday());
+      setQuizCompletedToday(await hasCompletedDailyQuizToday());
       setIsReady(true);
     } catch (refreshError) {
       setError(

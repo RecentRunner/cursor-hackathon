@@ -12,8 +12,12 @@ export function DailyQuizLinkButton() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    setIsCompleted(hasCompletedDailyQuizToday());
-    setIsReady(true);
+    async function loadStatus() {
+      setIsCompleted(await hasCompletedDailyQuizToday());
+      setIsReady(true);
+    }
+
+    void loadStatus();
   }, []);
 
   if (!isReady || isCompleted) {

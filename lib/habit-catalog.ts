@@ -50,7 +50,7 @@ export const habitCatalog: HabitCatalogEntry[] = [
     label: "Wind down before bed",
     focusTopics: ["Sleep"],
     suggestedByQuiz: (answers) =>
-      answers.sleepLength <= 2 || answers.sleepQuality <= 2,
+      answers.sleepLength < 7 || answers.sleepQuality <= 2,
   },
 ];
 

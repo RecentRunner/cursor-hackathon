@@ -16,19 +16,18 @@ import {
 import { Label } from "@/components/ui/label";
 import {
   defaultDailyQuizAnswers,
+  formatSleepHours,
+  SLEEP_HOURS_MAX,
+  SLEEP_HOURS_MIN,
+  SLEEP_HOURS_STEP,
   WELLNESS_SCALE_MAX,
   type DailyQuizAnswers,
   type DailyQuizSubmission,
 } from "@/lib/avatar-state";
 import {
-  getDailyQuizSubmission,
-  getTodayDateKey,
-  saveDailyQuizSubmission,
+  getDailyEntryForToday,
+  saveDailyEntry,
 } from "@/lib/daily-quiz-storage";
-import {
-  getJournalEntryForToday,
-  saveJournalEntry,
-} from "@/lib/journal-storage";
 
 export function DailyQuizForm() {
   const [answers, setAnswers] = useState<DailyQuizAnswers>(
@@ -44,19 +43,23 @@ export function DailyQuizForm() {
 
   useEffect(() => {
     async function loadDailyCheckIn() {
-      const existingSubmission = getDailyQuizSubmission();
-      const existingJournal = await getJournalEntryForToday();
+      try {
+        const existingEntry = await getDailyEntryForToday();
 
-      if (existingSubmission?.date === getTodayDateKey()) {
-        setSubmission(existingSubmission);
-        setAnswers(existingSubmission.answers);
+        if (existingEntry) {
+          setSubmission(existingEntry);
+          setAnswers(existingEntry.answers);
+          setJournal(existingEntry.journal);
+        }
+      } catch (loadError) {
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Could not load today's check-in.",
+        );
+      } finally {
+        setIsReady(true);
       }
-
-      if (existingJournal) {
-        setJournal(existingJournal.content);
-      }
-
-      setIsReady(true);
     }
 
     void loadDailyCheckIn();
@@ -84,9 +87,8 @@ export function DailyQuizForm() {
     setError(null);
 
     try {
-      const savedSubmission = saveDailyQuizSubmission(answers);
-      await saveJournalEntry(journal);
-      setSubmission(savedSubmission);
+      const savedEntry = await saveDailyEntry(answers, journal);
+      setSubmission(savedEntry);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -117,7 +119,7 @@ export function DailyQuizForm() {
         <CardHeader>
           <CardTitle className="text-base">Wellness</CardTitle>
           <CardDescription>
-            Sliders from 1 to 5 for how you&apos;re doing today.
+            Rate your wellness from 1 to 5. Sleep length uses hours.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -146,6 +148,10 @@ export function DailyQuizForm() {
             id="sleep-length"
             label="How long did you sleep?"
             value={answers.sleepLength}
+            min={SLEEP_HOURS_MIN}
+            max={SLEEP_HOURS_MAX}
+            step={SLEEP_HOURS_STEP}
+            formatValue={formatSleepHours}
             disabled={isCompleted}
             onChange={(value) => updateAnswer("sleepLength", value)}
           />
@@ -162,9 +168,7 @@ export function DailyQuizForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Daily journal</CardTitle>
-          <CardDescription>
-            Write about your day. Saved separately from your quiz answers.
-          </CardDescription>
+          <CardDescription>Write about your day.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Label htmlFor="journal" className="sr-only">
