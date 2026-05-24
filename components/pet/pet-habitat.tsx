@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { AnimatedPetSprite } from "@/components/pet/animated-pet-sprite";
 import { ParallaxRoomBackground } from "@/components/pet/parallax-room-background";
+import { PetStyleLink } from "@/components/pet/pet-style-link";
 import { PixelGauge } from "@/components/pet/pixel-gauge";
 import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
 import {
@@ -69,6 +70,9 @@ export function PetHabitat({ customization, className }: PetHabitatProps) {
         <div className="pointer-events-none absolute left-2 top-2 z-20 grid gap-1.5">
           <PixelGauge type="heart" value={condition.health} variant="overlay" />
           <PixelGauge type="energy" value={condition.energy} variant="overlay" />
+        </div>
+        <div className="absolute right-2 top-2 z-20">
+          <PetStyleLink />
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-8 bg-gradient-to-t from-black/35 to-transparent" />
       </div>
