@@ -30,8 +30,14 @@ file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["http://127.0.0.1:3000/**", "http://localhost:3000/**"]
+site_url = "https://cursor-hackathon-flame.vercel.app"
+additional_redirect_urls = [
+  "http://127.0.0.1:3000/**",
+  "http://localhost:3000/**",
+  "https://cursor-hackathon-flame.vercel.app/**",
+  "https://cursor-hackathon-*-harkamal-randhawas-projects.vercel.app/**",
+  "https://cursor-hackathon-*-recentrunner-harkamal-randhawas-projects.vercel.app/**",
+]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
