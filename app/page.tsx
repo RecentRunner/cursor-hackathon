@@ -26,7 +26,7 @@ export default function Home() {
               Build habits. Care for your pixel pet.
             </h1>
             <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-              Habit Pet turns daily check-ins, wellness sliders, and journaling
+              HaBit turns daily check-ins, wellness sliders, and journaling
               into a simple game. Keep streaks alive, take your once-per-day
               quiz, and watch your pet change with you.
             </p>

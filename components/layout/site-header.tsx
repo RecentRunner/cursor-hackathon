@@ -12,7 +12,7 @@ export function SiteHeader() {
     <header className="w-full border-b border-b-foreground/10">
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-5 text-sm">
         <Link href={routes.home} className="font-pixel text-xs tracking-tight">
-          Habit Pet
+          HaBit
         </Link>
         {!hasEnvVars ? (
           <EnvVarWarning />
