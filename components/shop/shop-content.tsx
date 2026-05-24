@@ -70,9 +70,18 @@ function ShopItemCard({
     <Card className="flex h-full flex-col overflow-hidden">
       <CardContent className="flex h-full flex-col gap-3 p-3">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex size-12 shrink-0 items-center justify-center border-2 border-border bg-zinc-950/80 p-1">
+          <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden border-2 border-border bg-zinc-950/80 p-1">
             {room ? (
-              <div className={cn("size-full", room.previewClassName)} />
+              item.image_path ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.image_path}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                <div className={cn("size-full", room.previewClassName)} />
+              )
             ) : (
               <TintedSpriteIcon
                 src={item.image_path}

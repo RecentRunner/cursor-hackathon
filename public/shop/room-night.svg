@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="night-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="55%" stop-color="#4c1d95"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" fill="url(#night-sky)"/>
+  <circle cx="10" cy="12" r="1" fill="#fef9c3"/>
+  <circle cx="22" cy="8" r="1" fill="#fef9c3"/>
+  <circle cx="34" cy="14" r="1" fill="#fef9c3"/>
+  <circle cx="38" cy="10" r="1.5" fill="#fef08a"/>
+  <circle cx="36" cy="11" r="4" fill="#fef9c3" opacity="0.9"/>
+</svg>

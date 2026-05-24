@@ -33,8 +33,8 @@ values
   ('head-5', 'Head 5', 'head', 50, '/character/head/head-5.png'),
   ('head-6', 'Head 6', 'head', 55, '/character/head/head-6.png'),
   ('head-7', 'Head 7', 'head', 60, '/character/head/head-7.png'),
-  ('room-night', 'Starlit Night', 'room', 40, ''),
-  ('room-forest', 'Mystic Forest', 'room', 50, '')
+  ('room-night', 'Starlit Night', 'room', 40, '/shop/room-night.svg'),
+  ('room-forest', 'Mystic Forest', 'room', 50, '/shop/room-forest.svg')
 on conflict (id) do update
 set
   name = excluded.name,

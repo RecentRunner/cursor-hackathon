@@ -236,7 +236,7 @@ export function getShopRoomBackgrounds() {
 
     price: room.id === "room-night" ? 40 : 50,
 
-    image_path: "",
+    image_path: room.id === "room-night" ? "/shop/room-night.svg" : "/shop/room-forest.svg",
 
   }));
 
