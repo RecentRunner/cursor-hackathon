@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
 import { GlobalBottomNav } from "@/components/layout/global-bottom-nav";
+import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -35,8 +36,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="min-h-svh pb-24">{children}</div>
-          <GlobalBottomNav />
+          <ToastProvider>
+            <div className="min-h-svh pb-24">{children}</div>
+            <GlobalBottomNav />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>
