@@ -69,17 +69,20 @@ export async function getDailyEntryForToday(): Promise<DailyQuizSubmission | nul
     )
     .eq("user_id", userId)
     .eq("entry_date", entryDate)
-    .maybeSingle();
+    .order("created_at", { ascending: false })
+    .limit(1);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  if (!data) {
+  const row = data?.[0];
+
+  if (!row) {
     return null;
   }
 
-  return mapRowToSubmission(data as DailyEntryRow);
+  return mapRowToSubmission(row as DailyEntryRow);
 }
 
 export async function getDailyQuizSubmission() {

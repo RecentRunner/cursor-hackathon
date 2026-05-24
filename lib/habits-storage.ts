@@ -50,10 +50,48 @@ function mapHabitRow(row: HabitRow): Habit {
     id: row.id,
     label: row.name,
     catalogId: getCatalogIdByLabel(row.name),
-    streak: row.streak,
-    lastCompletedDate: row.last_completed_on,
+    streak: row.streak ?? 0,
+    lastCompletedDate: row.last_completed_on ?? null,
     isCustom: !isCatalogLabel(row.name),
   };
+}
+
+function getFirstRow<T>(rows: T[] | null | undefined) {
+  return rows?.[0] ?? null;
+}
+
+function dedupeHabitsByName(rows: HabitRow[]) {
+  const seen = new Map<string, HabitRow>();
+
+  for (const row of rows) {
+    const key = row.name.trim().toLowerCase();
+
+    if (!seen.has(key)) {
+      seen.set(key, row);
+    }
+  }
+
+  return Array.from(seen.values());
+}
+
+async function findActiveHabitByName(
+  userId: string,
+  name: string,
+): Promise<HabitRow | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("habits")
+    .select("id, name, streak, last_completed_on")
+    .eq("user_id", userId)
+    .eq("name", name)
+    .eq("active", true)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return getFirstRow(data as HabitRow[] | null);
 }
 
 async function getAuthenticatedUserId() {
@@ -111,14 +149,13 @@ async function getPreviousCompletedDate(
     .eq("habit_id", habitId)
     .neq("completed_on", today)
     .order("completed_on", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data?.completed_on ?? null;
+  return getFirstRow(data as { completed_on: string }[] | null)?.completed_on ?? null;
 }
 
 export function isHabitCompletedToday(habit: Habit, today = getTodayDateKey()) {
@@ -144,7 +181,9 @@ export async function getHabits(): Promise<Habit[]> {
     throw new Error(error.message);
   }
 
-  const rows = await reconcileMissedDayStreaks((data ?? []) as HabitRow[]);
+  const rows = await reconcileMissedDayStreaks(
+    dedupeHabitsByName((data ?? []) as HabitRow[]),
+  );
 
   return rows.map(mapHabitRow);
 }
@@ -163,19 +202,7 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
   }
 
   const supabase = createClient();
-  const { data: existing, error: existingError } = await supabase
-    .from("habits")
-    .select("id, name, streak, last_completed_on")
-    .eq("user_id", userId)
-    .eq("name", entry.label)
-    .eq("active", true)
-    .maybeSingle();
-
-  if (existingError) {
-    throw new Error(existingError.message);
-  }
-
-  let row = existing as HabitRow | null;
+  let row = await findActiveHabitByName(userId, entry.label);
 
   if (!row) {
     const { data: inserted, error: insertError } = await supabase
@@ -190,10 +217,14 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
       .single();
 
     if (insertError) {
-      throw new Error(insertError.message);
-    }
+      row = await findActiveHabitByName(userId, entry.label);
 
-    row = inserted as HabitRow;
+      if (!row) {
+        throw new Error(insertError.message);
+      }
+    } else {
+      row = inserted as HabitRow;
+    }
   }
 
   const [reconciledRow] = await reconcileMissedDayStreaks([row]);
@@ -228,23 +259,26 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
   const [reconciledHabit] = await reconcileMissedDayStreaks([habit as HabitRow]);
   const currentStreak = reconciledHabit.streak;
 
-  const { data: existingLog, error: existingLogError } = await supabase
+  const { data: existingLogs, error: existingLogError } = await supabase
     .from("habit_logs")
     .select("id")
     .eq("user_id", userId)
     .eq("habit_id", habitId)
-    .eq("completed_on", today)
-    .maybeSingle();
+    .eq("completed_on", today);
 
   if (existingLogError) {
     throw new Error(existingLogError.message);
   }
 
+  const existingLog = getFirstRow(existingLogs as { id: string }[] | null);
+
   if (existingLog) {
     const { error: deleteError } = await supabase
       .from("habit_logs")
       .delete()
-      .eq("id", existingLog.id);
+      .eq("user_id", userId)
+      .eq("habit_id", habitId)
+      .eq("completed_on", today);
 
     if (deleteError) {
       throw new Error(deleteError.message);
