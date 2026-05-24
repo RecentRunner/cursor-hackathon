@@ -38,32 +38,26 @@ On the **Pet** tab, users rename their pet and switch between **Overview** and *
    npm install
    ```
 
-2. Generate placeholder character/shop sprites (if missing):
-
-   ```bash
-   npm run generate:sprites
-   ```
-
-3. Create local environment file:
+2. Create local environment file:
 
    ```bash
    cp .env.example .env.local
    ```
 
-4. Add Supabase values to `.env.local`:
+3. Add Supabase values to `.env.local`:
 
    ```env
    NEXT_PUBLIC_SUPABASE_URL=
    NEXT_PUBLIC_SUPABASE_ANON_KEY=
    ```
 
-5. Apply migrations locally (Supabase CLI):
+4. Apply migrations locally (Supabase CLI):
 
    ```bash
    supabase db reset
    ```
 
-6. Start the app:
+5. Start the app:
 
    ```bash
    npm run dev
@@ -87,7 +81,7 @@ Stored in `avatar_state`:
 
 Style columns are validated against allowed variant ids (`none`, `pants-1`, …). Shop accessories overlay equipped variants at render time without overwriting saved customization.
 
-Sprite assets: `public/character/{layer}/` (regenerate via `npm run generate:sprites`).
+Sprite assets are added manually under `public/character/{layer}/` (e.g. `public/character/head/head-1.png`). Paths must match the variant ids in `lib/character/presets.ts` and `supabase/seed.sql`.
 
 ## Shop
 

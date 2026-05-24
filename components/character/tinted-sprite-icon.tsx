@@ -37,35 +37,39 @@ export function TintedSpriteIcon({
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) return;
 
-      const image = await getCachedImage(src);
-      if (cancelled) return;
+      try {
+        const image = await getCachedImage(src);
+        if (cancelled) return;
 
-      canvas.width = image.width;
-      canvas.height = image.height;
-      ctx.clearRect(0, 0, image.width, image.height);
+        canvas.width = image.width;
+        canvas.height = image.height;
+        ctx.clearRect(0, 0, image.width, image.height);
 
-      const rgb = hslToRgb(color.h, color.s, color.l);
-      const isEyesLayer = src.includes("/character/eyes/");
+        const rgb = hslToRgb(color.h, color.s, color.l);
+        const isEyesLayer = src.includes("/character/eyes/");
 
-      drawTintedSprite(
-        ctx,
-        image,
-        rgb,
-        isEyesLayer && skinColor
-          ? {
-              mode: "eyes",
-              skinColor: hslToRgb(skinColor.h, skinColor.s, skinColor.l),
-            }
-          : undefined,
-      );
+        drawTintedSprite(
+          ctx,
+          image,
+          rgb,
+          isEyesLayer && skinColor
+            ? {
+                mode: "eyes",
+                skinColor: hslToRgb(skinColor.h, skinColor.s, skinColor.l),
+              }
+            : undefined,
+        );
+      } catch {
+        // Ignore missing or broken sprite assets so the UI stays responsive.
+      }
     }
 
-    render();
+    void render();
 
     return () => {
       cancelled = true;
     };
-  }, [src, color, skinColor]);
+  }, [src, color.h, color.s, color.l, skinColor?.h, skinColor?.s, skinColor?.l]);
 
   return (
     <canvas

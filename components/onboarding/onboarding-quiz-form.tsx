@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { CharacterLayerPreview } from "@/components/character/character-layer-preview";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { defaultAvatarCustomization } from "@/lib/avatar-customization-storage";
 import {
   focusTopicOptions,
   saveOnboardingPreferences,
@@ -52,25 +50,16 @@ export function OnboardingQuizForm() {
   return (
     <div className="min-h-svh bg-background">
       <main className="mx-auto flex min-h-svh max-w-lg flex-col justify-center px-5 py-10">
-        <div className="mb-8 flex flex-col items-center gap-4 text-center">
-          <CharacterLayerPreview
-            colors={defaultAvatarCustomization.colors}
-            variants={defaultAvatarCustomization.variants}
-            scale={6}
-            compact
-            className="max-w-[12rem]"
-          />
-          <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
-              Step 1 of 2
-            </p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-              Welcome to Habit Pet
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Choose a focus area, then design your pet in the next step.
-            </p>
-          </div>
+        <div className="mb-8 text-center">
+          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+            Step 1 of 2
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+            Welcome to Habit Pet
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Choose a focus area, then design your pet in the next step.
+          </p>
         </div>
 
         <Card>
