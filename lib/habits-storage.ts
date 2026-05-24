@@ -19,60 +19,39 @@ export type Habit = {
 type HabitRow = {
   id: string;
   name: string;
-};
-
-type HabitLogRow = {
-  habit_id: string;
-  completed_on: string;
+  streak: number;
+  last_completed_on: string | null;
 };
 
 export function getTodayDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
-function calculateStreak(completedDates: string[], today = getTodayDateKey()) {
-  if (completedDates.length === 0) {
-    return 0;
-  }
+function getDayDiff(fromDate: string, toDate: string) {
+  const from = new Date(`${fromDate}T00:00:00`);
+  const to = new Date(`${toDate}T00:00:00`);
 
-  const dates = new Set(completedDates);
-  let streak = 0;
-  const cursor = new Date(`${today}T00:00:00`);
-
-  if (!dates.has(today)) {
-    cursor.setDate(cursor.getDate() - 1);
-  }
-
-  while (dates.has(getTodayDateKey(cursor))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-
-  return streak;
+  return Math.round((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getLastCompletedDate(completedDates: string[], today = getTodayDateKey()) {
-  if (completedDates.includes(today)) {
-    return today;
-  }
-
-  const sortedDates = [...completedDates].sort().reverse();
-  return sortedDates[0] ?? null;
-}
-
-function mapHabitRow(
-  row: HabitRow,
-  logsByHabitId: Map<string, string[]>,
+function shouldResetStreakForMissedDay(
+  lastCompletedOn: string | null,
   today = getTodayDateKey(),
-): Habit {
-  const completedDates = logsByHabitId.get(row.id) ?? [];
+) {
+  if (!lastCompletedOn) {
+    return false;
+  }
 
+  return getDayDiff(lastCompletedOn, today) > 1;
+}
+
+function mapHabitRow(row: HabitRow): Habit {
   return {
     id: row.id,
     label: row.name,
     catalogId: getCatalogIdByLabel(row.name),
-    streak: calculateStreak(completedDates, today),
-    lastCompletedDate: getLastCompletedDate(completedDates, today),
+    streak: row.streak,
+    lastCompletedDate: row.last_completed_on,
     isCustom: !isCatalogLabel(row.name),
   };
 }
@@ -91,26 +70,55 @@ async function getAuthenticatedUserId() {
   return user.id;
 }
 
-async function fetchHabitLogs(userId: string) {
+async function reconcileMissedDayStreaks(
+  habits: HabitRow[],
+  today = getTodayDateKey(),
+) {
+  const supabase = createClient();
+  const habitsToReset = habits.filter(
+    (habit) =>
+      habit.streak > 0 &&
+      shouldResetStreakForMissedDay(habit.last_completed_on, today),
+  );
+
+  if (habitsToReset.length === 0) {
+    return habits;
+  }
+
+  await Promise.all(
+    habitsToReset.map((habit) =>
+      supabase.from("habits").update({ streak: 0 }).eq("id", habit.id),
+    ),
+  );
+
+  return habits.map((habit) =>
+    habitsToReset.some((item) => item.id === habit.id)
+      ? { ...habit, streak: 0 }
+      : habit,
+  );
+}
+
+async function getPreviousCompletedDate(
+  userId: string,
+  habitId: string,
+  today = getTodayDateKey(),
+) {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("habit_logs")
-    .select("habit_id, completed_on")
-    .eq("user_id", userId);
+    .select("completed_on")
+    .eq("user_id", userId)
+    .eq("habit_id", habitId)
+    .neq("completed_on", today)
+    .order("completed_on", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const logsByHabitId = new Map<string, string[]>();
-
-  for (const log of (data ?? []) as HabitLogRow[]) {
-    const existing = logsByHabitId.get(log.habit_id) ?? [];
-    existing.push(log.completed_on);
-    logsByHabitId.set(log.habit_id, existing);
-  }
-
-  return logsByHabitId;
+  return data?.completed_on ?? null;
 }
 
 export function isHabitCompletedToday(habit: Habit, today = getTodayDateKey()) {
@@ -127,7 +135,7 @@ export async function getHabits(): Promise<Habit[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("habits")
-    .select("id, name")
+    .select("id, name, streak, last_completed_on")
     .eq("user_id", userId)
     .eq("active", true)
     .order("created_at", { ascending: true });
@@ -136,11 +144,9 @@ export async function getHabits(): Promise<Habit[]> {
     throw new Error(error.message);
   }
 
-  const logsByHabitId = await fetchHabitLogs(userId);
+  const rows = await reconcileMissedDayStreaks((data ?? []) as HabitRow[]);
 
-  return ((data ?? []) as HabitRow[]).map((row) =>
-    mapHabitRow(row, logsByHabitId),
-  );
+  return rows.map(mapHabitRow);
 }
 
 export async function ensureCatalogHabit(catalogId: string): Promise<Habit | null> {
@@ -159,7 +165,7 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
   const supabase = createClient();
   const { data: existing, error: existingError } = await supabase
     .from("habits")
-    .select("id, name")
+    .select("id, name, streak, last_completed_on")
     .eq("user_id", userId)
     .eq("name", entry.label)
     .eq("active", true)
@@ -178,8 +184,9 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
         user_id: userId,
         name: entry.label,
         active: true,
+        streak: 0,
       })
-      .select("id, name")
+      .select("id, name, streak, last_completed_on")
       .single();
 
     if (insertError) {
@@ -189,8 +196,8 @@ export async function ensureCatalogHabit(catalogId: string): Promise<Habit | nul
     row = inserted as HabitRow;
   }
 
-  const logsByHabitId = await fetchHabitLogs(userId);
-  return mapHabitRow(row, logsByHabitId);
+  const [reconciledRow] = await reconcileMissedDayStreaks([row]);
+  return mapHabitRow(reconciledRow);
 }
 
 export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
@@ -202,6 +209,25 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
 
   const supabase = createClient();
   const today = getTodayDateKey();
+
+  const { data: habit, error: habitError } = await supabase
+    .from("habits")
+    .select("id, name, streak, last_completed_on")
+    .eq("id", habitId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (habitError) {
+    throw new Error(habitError.message);
+  }
+
+  if (!habit) {
+    throw new Error("Habit not found.");
+  }
+
+  const [reconciledHabit] = await reconcileMissedDayStreaks([habit as HabitRow]);
+  let currentStreak = reconciledHabit.streak;
+
   const { data: existingLog, error: existingLogError } = await supabase
     .from("habit_logs")
     .select("id")
@@ -223,6 +249,22 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
     if (deleteError) {
       throw new Error(deleteError.message);
     }
+
+    const nextStreak = Math.max(0, currentStreak - 1);
+    const previousCompletedDate = await getPreviousCompletedDate(userId, habitId);
+
+    const { error: updateError } = await supabase
+      .from("habits")
+      .update({
+        streak: nextStreak,
+        last_completed_on: previousCompletedDate,
+      })
+      .eq("id", habitId)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
   } else {
     const { error: insertError } = await supabase.from("habit_logs").insert({
       user_id: userId,
@@ -232,6 +274,21 @@ export async function toggleHabitCompletion(habitId: string): Promise<Habit[]> {
 
     if (insertError) {
       throw new Error(insertError.message);
+    }
+
+    const nextStreak = currentStreak + 1;
+
+    const { error: updateError } = await supabase
+      .from("habits")
+      .update({
+        streak: nextStreak,
+        last_completed_on: today,
+      })
+      .eq("id", habitId)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      throw new Error(updateError.message);
     }
   }
 
@@ -257,6 +314,7 @@ export async function addHabit(label: string): Promise<Habit[]> {
     user_id: userId,
     name: trimmedLabel,
     active: true,
+    streak: 0,
   });
 
   if (error) {
