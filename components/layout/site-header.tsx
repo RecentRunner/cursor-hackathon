@@ -4,6 +4,7 @@ import { AuthButton } from "@/components/auth-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { HabitBrand } from "@/components/layout/habit-brand";
 import { HeaderCoinBalance } from "@/components/layout/header-coin-balance";
+import { HeaderMusicButton } from "@/components/layout/header-music-button";
 import { routes } from "@/lib/routes";
 import { hasEnvVars } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export function SiteHeader() {
               <Suspense fallback={null}>
                 <HeaderCoinBalance />
               </Suspense>
+              <HeaderMusicButton />
               <Suspense fallback={null}>
                 <AuthButton />
               </Suspense>

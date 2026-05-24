@@ -275,6 +275,43 @@
       transparent 72%
     );
   }
+
+  .ambient-radio-window-chrome {
+    @apply border-2 border-border bg-background/95 backdrop-blur-sm;
+    box-shadow: var(--retro-shadow);
+  }
+
+  .ambient-radio-slider {
+    @apply accent-secondary;
+  }
+
+  .ambient-radio-nav-active {
+    animation: ambient-radio-pulse 1.6s steps(3, end) infinite;
+  }
+
+  .ambient-radio-nav-dot {
+    @apply absolute -right-0.5 -top-0.5 h-1.5 w-1.5 bg-accent;
+    box-shadow: 0 0 0 1px hsl(var(--background));
+  }
+
+  .ambient-radio-eq {
+    @apply inline-flex items-end gap-0.5;
+    height: 0.75rem;
+  }
+
+  .ambient-radio-eq span {
+    @apply w-1 bg-secondary;
+    height: 0.25rem;
+    animation: ambient-eq-bounce 0.9s steps(2, end) infinite;
+  }
+
+  .ambient-radio-eq span:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .ambient-radio-eq span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
 }
 
 @keyframes emotion-pop {
@@ -332,4 +369,26 @@
 
 .animate-star-twinkle {
   animation: star-twinkle 3s steps(2, end) infinite;
+}
+
+@keyframes ambient-radio-pulse {
+  0%,
+  100% {
+    box-shadow: var(--retro-shadow-sm);
+  }
+  50% {
+    box-shadow:
+      var(--retro-shadow-sm),
+      0 0 0 2px hsl(var(--secondary) / 0.35);
+  }
+}
+
+@keyframes ambient-eq-bounce {
+  0%,
+  100% {
+    height: 0.25rem;
+  }
+  50% {
+    height: 0.75rem;
+  }
 }
