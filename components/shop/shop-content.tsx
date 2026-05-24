@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast-provider";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
-import { getAvatarCustomization } from "@/lib/avatar-customization-storage";
-import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
-import { defaultAvatarCustomization } from "@/lib/avatar-customization-storage";
-import { DEFAULT_GRAY_COLOR } from "@/lib/character/presets";
+import {
+  defaultAvatarCustomization,
+  getAvatarCustomization,
+  type AvatarCustomization,
+} from "@/lib/avatar-customization-storage";
 import { getRoomBackground, normalizeRoomBackgroundId } from "@/lib/room-backgrounds";
 import {
   equipShopItem,
@@ -25,6 +26,7 @@ import {
   type ShopLayerId,
 } from "@/lib/shop-catalog";
 import { ShopItemPreviewModal } from "@/components/shop/shop-item-preview-modal";
+import { getShopItemThumbnailColors } from "@/lib/shop-preview";
 import { cn } from "@/lib/utils";
 
 function ShopItemPriceBadge({
@@ -80,6 +82,7 @@ function ShopItemCard({
   equipped,
   canAfford,
   isPending,
+  characterColors,
   onPurchase,
   onEquipToggle,
   onPreview,
@@ -89,11 +92,16 @@ function ShopItemCard({
   equipped: boolean;
   canAfford: boolean;
   isPending: boolean;
+  characterColors: AvatarCustomization["colors"];
   onPurchase: () => void;
   onEquipToggle: () => void;
   onPreview: () => void;
 }) {
   const room = item.type === "room" ? getRoomBackground(item.id) : null;
+  const thumbnailColors =
+    item.type === "room"
+      ? null
+      : getShopItemThumbnailColors(item, characterColors);
 
   const actionLabel = (() => {
     if (isPending) {
@@ -123,13 +131,14 @@ function ShopItemCard({
                 alt=""
                 className="size-full object-cover image-pixelated"
               />
-            ) : (
+            ) : thumbnailColors ? (
               <TintedSpriteIcon
                 src={item.image_path}
-                color={DEFAULT_GRAY_COLOR.hsl}
+                color={thumbnailColors.color}
+                skinColor={thumbnailColors.skinColor}
                 size={32}
               />
-            )}
+            ) : null}
           </div>
 
           <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
@@ -355,6 +364,7 @@ export function ShopContent() {
                   equipped={equippedRoomBackground === item.id}
                   canAfford={coins !== null && coins >= item.price}
                   isPending={pendingItemId === item.id}
+                  characterColors={baseCustomization.colors}
                   onPurchase={() => void handlePurchase(item.id)}
                   onEquipToggle={() => void handleEquipToggle(item)}
                   onPreview={() => setPreviewItem(item)}
@@ -378,6 +388,7 @@ export function ShopContent() {
                   equipped={equippedItems.includes(item.id)}
                   canAfford={coins !== null && coins >= item.price}
                   isPending={pendingItemId === item.id}
+                  characterColors={baseCustomization.colors}
                   onPurchase={() => void handlePurchase(item.id)}
                   onEquipToggle={() => void handleEquipToggle(item)}
                   onPreview={() => setPreviewItem(item)}

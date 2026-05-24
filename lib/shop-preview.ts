@@ -1,5 +1,12 @@
 import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
-import { parseVariantId, parseShopStyleItem, type ShopItemRecord } from "@/lib/shop-catalog";
+import type { HSL } from "@/lib/character/color-utils";
+import type { LayerColorState } from "@/lib/character/types";
+import {
+  isShopLayerId,
+  parseVariantId,
+  parseShopStyleItem,
+  type ShopItemRecord,
+} from "@/lib/shop-catalog";
 import {
   normalizeRoomBackgroundId,
   type RoomBackgroundId,
@@ -15,6 +22,21 @@ export function getShopPreviewRoomId(
   }
 
   return normalizeRoomBackgroundId(base.roomBackground);
+}
+
+/** Tint colors for shop grid thumbnails — match the user's current layer colors. */
+export function getShopItemThumbnailColors(
+  item: ShopItemRecord,
+  colors: LayerColorState,
+): { color: HSL; skinColor?: HSL } {
+  if (!isShopLayerId(item.type)) {
+    return { color: colors.torso };
+  }
+
+  return {
+    color: colors[item.type],
+    skinColor: item.type === "eyes" ? colors.skin : undefined,
+  };
 }
 
 /** Build a non-persisted avatar state showing how a shop item would look. */
