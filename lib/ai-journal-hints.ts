@@ -4,6 +4,7 @@ import {
   sanitizePlausibleAiTaskLabels,
 } from "@/lib/ai-habit-utils";
 import {
+  filterExcludedSimilarTaskLabels,
   getFocusTopicDefaultTasks,
   isPlausibleTaskLabel,
 } from "@/lib/ai-task-guardrails";
@@ -241,12 +242,29 @@ export function buildJournalAwareFallbackLabels(context: AiTaskContext): string[
 export function mergeJournalHintsIntoLabels(
   labels: string[],
   context: AiTaskContext,
-): string[] {
+  options?: {
+    fillInOnly?: boolean;
+    maxCount?: number;
+    excludeLabels?: string[];
+  },
+) {
   const journalHints = extractJournalTaskHints(context.journal);
-  const merged = sanitizePlausibleAiTaskLabels([
+  let merged = sanitizePlausibleAiTaskLabels([
     ...journalHints,
     ...labels.map(normalizeAiTaskLabel),
   ]);
+
+  if (options?.excludeLabels?.length) {
+    merged = filterExcludedSimilarTaskLabels(merged, options.excludeLabels);
+  }
+
+  if (options?.maxCount !== undefined) {
+    merged = merged.slice(0, options.maxCount);
+  }
+
+  if (options?.fillInOnly) {
+    return merged;
+  }
 
   return ensureMinimumFallbackTasks(new Set(merged), context);
 }

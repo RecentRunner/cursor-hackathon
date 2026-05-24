@@ -1,4 +1,12 @@
-import { isPlausibleTaskLabel } from "@/lib/ai-task-guardrails";
+import {
+  dedupeSimilarTaskLabels,
+  filterExcludedSimilarTaskLabels,
+  isPlausibleTaskLabel,
+} from "@/lib/ai-task-guardrails";
+import {
+  MAX_DAILY_AI_TASKS,
+  type AiTaskGenerationOptions,
+} from "@/lib/ai-task-generation";
 
 export const AI_HABIT_NAME_PREFIX = "ai::";
 
@@ -30,7 +38,7 @@ export function sanitizeAiTaskLabels(
 
   const seen = new Set<string>();
 
-  return labels
+  const filtered = labels
     .filter((label): label is string => typeof label === "string")
     .map(normalizeAiTaskLabel)
     .filter((label) => label.length > 0)
@@ -47,10 +55,38 @@ export function sanitizeAiTaskLabels(
 
       seen.add(key);
       return true;
-    })
-    .slice(0, 5);
+    });
+
+  return dedupeSimilarTaskLabels(filtered).slice(0, 5);
 }
 
 export function sanitizePlausibleAiTaskLabels(labels: unknown) {
   return sanitizeAiTaskLabels(labels, { requirePlausible: true });
 }
+
+export function finalizeDailyAiTaskLabels(
+  carryOverLabels: string[],
+  newLabels: string[],
+  maxCount = MAX_DAILY_AI_TASKS,
+) {
+  return dedupeSimilarTaskLabels(
+    sanitizePlausibleAiTaskLabels([...carryOverLabels, ...newLabels]),
+  ).slice(0, maxCount);
+}
+
+export function finalizeNewAiTaskLabels(
+  newLabels: string[],
+  options?: AiTaskGenerationOptions,
+) {
+  const maxCount = options?.maxCount ?? MAX_DAILY_AI_TASKS;
+  const excludeLabels = options?.excludeLabels ?? [];
+
+  return dedupeSimilarTaskLabels(
+    filterExcludedSimilarTaskLabels(
+      sanitizePlausibleAiTaskLabels(newLabels),
+      excludeLabels,
+    ),
+  ).slice(0, maxCount);
+}
+
+export { MAX_DAILY_AI_TASKS };

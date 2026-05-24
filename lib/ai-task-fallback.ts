@@ -5,9 +5,16 @@ import {
   matchesFocusTopics,
   matchesQuizAnswers,
 } from "@/lib/habit-catalog";
-import { sanitizePlausibleAiTaskLabels } from "@/lib/ai-habit-utils";
+import { finalizeNewAiTaskLabels } from "@/lib/ai-habit-utils";
+import {
+  MAX_DAILY_AI_TASKS,
+  type AiTaskGenerationOptions,
+} from "@/lib/ai-task-generation";
 
-export function buildFallbackAiTaskLabels(context: AiTaskContext): string[] {
+export function buildFallbackAiTaskLabels(
+  context: AiTaskContext,
+  options?: AiTaskGenerationOptions,
+): string[] {
   const labels = new Set<string>(buildJournalAwareFallbackLabels(context));
 
   for (const entry of habitCatalog) {
@@ -21,5 +28,8 @@ export function buildFallbackAiTaskLabels(context: AiTaskContext): string[] {
     }
   }
 
-  return sanitizePlausibleAiTaskLabels(Array.from(labels));
+  return finalizeNewAiTaskLabels(Array.from(labels), {
+    excludeLabels: options?.excludeLabels,
+    maxCount: options?.maxCount ?? MAX_DAILY_AI_TASKS,
+  });
 }

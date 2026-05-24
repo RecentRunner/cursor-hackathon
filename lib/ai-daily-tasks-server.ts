@@ -1,5 +1,7 @@
 import {
   AI_HABIT_NAME_PREFIX,
+  displayHabitName,
+  finalizeDailyAiTaskLabels,
   isAiGeneratedHabitName,
   toStoredAiHabitName,
 } from "@/lib/ai-habit-utils";
@@ -17,6 +19,9 @@ import { buildFallbackAiTaskLabels } from "@/lib/ai-task-fallback";
 import { isCatalogLabel } from "@/lib/habit-catalog";
 import { generateAiTaskLabels } from "@/lib/openrouter";
 import {
+  getGenerationSlotCount,
+} from "@/lib/ai-task-generation";
+import {
   defaultProfilePreferences,
   type ProfilePreferences,
 } from "@/lib/profile-preferences-storage";
@@ -31,6 +36,70 @@ type DailyEntryRow = {
   sleep_quality: number;
   journal: string | null;
 };
+
+type AiHabitRow = {
+  id: string;
+  name: string;
+  streak: number;
+  last_completed_on: string | null;
+  active: boolean;
+};
+
+function getDayDiff(fromDate: string, toDate: string) {
+  const from = new Date(`${fromDate}T00:00:00`);
+  const to = new Date(`${toDate}T00:00:00`);
+
+  return Math.round((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function shouldResetStreakForMissedDay(
+  lastCompletedOn: string | null,
+  today: string,
+) {
+  if (!lastCompletedOn) {
+    return false;
+  }
+
+  return getDayDiff(lastCompletedOn, today) > 1;
+}
+
+async function getStreakCarryOverLabels(
+  supabase: SupabaseClient,
+  userId: string,
+  today: string,
+) {
+  const { data, error } = await supabase
+    .from("habits")
+    .select("id, name, streak, last_completed_on, active")
+    .eq("user_id", userId)
+    .like("name", `${AI_HABIT_NAME_PREFIX}%`)
+    .gt("streak", 0);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const carryOverLabels: string[] = [];
+
+  for (const habit of (data ?? []) as AiHabitRow[]) {
+    if (shouldResetStreakForMissedDay(habit.last_completed_on, today)) {
+      const { error: resetError } = await supabase
+        .from("habits")
+        .update({ streak: 0, claimed_streak_milestones: [] })
+        .eq("id", habit.id);
+
+      if (resetError) {
+        throw new Error(resetError.message);
+      }
+
+      continue;
+    }
+
+    carryOverLabels.push(displayHabitName(habit.name));
+  }
+
+  return carryOverLabels;
+}
 
 function parseProfilePreferences(
   focusTopics: string | string[] | null | undefined,
@@ -319,6 +388,11 @@ export async function generateAndSyncDailyTasks(
 ): Promise<GenerateDailyTasksResult> {
   const context = await loadAiTaskContext(supabase, userId, userMetadata);
   const inputHash = buildAiTaskInputHash(context);
+  const carryOverLabels = await getStreakCarryOverLabels(
+    supabase,
+    userId,
+    context.date,
+  );
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -351,22 +425,40 @@ export async function generateAndSyncDailyTasks(
     return {
       generated: false,
       source: "cache",
-      tasks: (activeAiHabits ?? []).map((habit) =>
-        habit.name.slice(AI_HABIT_NAME_PREFIX.length),
+      tasks: finalizeDailyAiTaskLabels(
+        carryOverLabels,
+        (activeAiHabits ?? [])
+          .map((habit) => displayHabitName(habit.name))
+          .filter(
+            (label) =>
+              !carryOverLabels.some(
+                (carryOver) => carryOver.toLowerCase() === label.toLowerCase(),
+              ),
+          ),
       ),
     };
   }
 
-  let taskLabels: string[] = [];
+  const slotsNeeded = getGenerationSlotCount(carryOverLabels.length);
+  let newLabels: string[] = [];
   let source: GenerateDailyTasksResult["source"] = "fallback";
 
-  try {
-    taskLabels = await generateAiTaskLabels(context);
-    source = "openrouter";
-  } catch {
-    taskLabels = buildFallbackAiTaskLabels(context);
-    source = "fallback";
+  if (slotsNeeded > 0) {
+    const generationOptions = {
+      excludeLabels: carryOverLabels,
+      maxCount: slotsNeeded,
+    };
+
+    try {
+      newLabels = await generateAiTaskLabels(context, generationOptions);
+      source = "openrouter";
+    } catch {
+      newLabels = buildFallbackAiTaskLabels(context, generationOptions);
+      source = "fallback";
+    }
   }
+
+  const taskLabels = finalizeDailyAiTaskLabels(carryOverLabels, newLabels);
 
   try {
     await deactivateLegacyCatalogHabits(supabase, userId);
@@ -380,11 +472,19 @@ export async function generateAndSyncDailyTasks(
       inputHash,
     );
   } catch (syncError) {
-    taskLabels = buildFallbackAiTaskLabels(context);
+    const fallbackLabels = finalizeDailyAiTaskLabels(
+      carryOverLabels,
+      slotsNeeded > 0
+        ? buildFallbackAiTaskLabels(context, {
+            excludeLabels: carryOverLabels,
+            maxCount: slotsNeeded,
+          })
+        : [],
+    );
     source = "fallback";
 
     await deactivateLegacyCatalogHabits(supabase, userId);
-    await syncAiDailyTasks(supabase, userId, taskLabels);
+    await syncAiDailyTasks(supabase, userId, fallbackLabels);
     await saveGenerationMetadata(
       supabase,
       userId,
@@ -397,6 +497,12 @@ export async function generateAndSyncDailyTasks(
     if (syncError instanceof Error) {
       console.error("AI task sync recovered with fallback:", syncError.message);
     }
+
+    return {
+      generated: true,
+      source,
+      tasks: fallbackLabels,
+    };
   }
 
   return {

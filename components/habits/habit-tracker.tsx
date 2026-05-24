@@ -23,6 +23,7 @@ import {
 import {
   addHabit,
   getCustomHabits,
+  getTodayDateKey,
   isHabitCompletedToday,
   removeHabit,
   toggleHabitCompletion,
@@ -198,6 +199,7 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
   );
   const [toggleErrors, setToggleErrors] = useState<Record<string, string>>({});
   const [coinMessage, setCoinMessage] = useState<string | null>(null);
+  const [todayKey, setTodayKey] = useState(() => getTodayDateKey());
 
   const getIsCompleted = useCallback(
     (habit: DailyTask) => {
@@ -255,6 +257,37 @@ export function HabitTracker({ mode = "daily" }: HabitTrackerProps) {
       window.clearTimeout(timeoutId);
     };
   }, [coinMessage]);
+
+  useEffect(() => {
+    const syncForNewDay = () => {
+      const nextTodayKey = getTodayDateKey();
+
+      if (nextTodayKey === todayKey) {
+        return;
+      }
+
+      setTodayKey(nextTodayKey);
+      setOptimisticCompletion({});
+      setCoinMessage(null);
+      void refresh();
+    };
+
+    const intervalId = window.setInterval(syncForNewDay, 60_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncForNewDay();
+      }
+    };
+
+    window.addEventListener("focus", syncForNewDay);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", syncForNewDay);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refresh, todayKey]);
 
   useEffect(() => {
     void refresh();
