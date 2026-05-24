@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import {
+  fetchOnboardingStatusForUser,
+  getRedirectPathFromStatus,
+} from "@/lib/onboarding-status";
 import { routes } from "@/lib/routes";
-import type { User } from "@supabase/supabase-js";
-
-export function hasCompletedOnboarding(user: User) {
-  return user.user_metadata?.onboarding_completed === true;
-}
+import { createClient } from "@/lib/supabase/server";
 
 export async function getSessionUser() {
   const supabase = await createClient();
@@ -32,10 +31,39 @@ export async function requireSessionUser() {
   return user;
 }
 
+export async function getOnboardingStatusForCurrentUser() {
+  const user = await requireSessionUser();
+  const supabase = await createClient();
+  return fetchOnboardingStatusForUser(user.id, supabase);
+}
+
+export async function getOnboardingRedirectPath() {
+  const status = await getOnboardingStatusForCurrentUser();
+  return getRedirectPathFromStatus(status);
+}
+
 export async function requireOnboardingComplete() {
   const user = await requireSessionUser();
+  const supabase = await createClient();
+  const status = await fetchOnboardingStatusForUser(user.id, supabase);
 
-  if (!hasCompletedOnboarding(user)) {
+  if (!status.appComplete) {
+    redirect(getRedirectPathFromStatus(status));
+  }
+
+  return user;
+}
+
+export async function requireOnboardingQuizComplete() {
+  const user = await requireSessionUser();
+  const supabase = await createClient();
+  const status = await fetchOnboardingStatusForUser(user.id, supabase);
+
+  if (status.appComplete) {
+    redirect(routes.avatar);
+  }
+
+  if (!status.quizComplete) {
     redirect(routes.onboardingQuiz);
   }
 

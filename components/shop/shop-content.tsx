@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { TintedSpriteIcon } from "@/components/character/tinted-sprite-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,33 +12,46 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast-provider";
 import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
+import { DEFAULT_GRAY_COLOR } from "@/lib/character/presets";
 import {
-  getShopState,
+  equipShopItem,
+  getShopInventory,
   purchaseShopItem,
-  type ShopItem,
+  unequipShopItem,
 } from "@/lib/shop-storage";
+import {
+  getLayerLabel,
+  type ShopItemRecord,
+  type ShopLayerId,
+} from "@/lib/shop-catalog";
 
-function formatItemType(type: string) {
-  return type.charAt(0).toUpperCase() + type.slice(1);
-}
+const SHOP_LAYER_ORDER: ShopLayerId[] = [
+  "head",
+  "torso",
+  "pants",
+  "shoes",
+  "eyes",
+];
 
 export function ShopContent() {
-  const [coins, setCoins] = useState<number | null>(null);
-  const [items, setItems] = useState<ShopItem[]>([]);
+  const { toast } = useToast();
+  const [items, setItems] = useState<ShopItemRecord[]>([]);
   const [ownedItemIds, setOwnedItemIds] = useState<string[]>([]);
+  const [equippedItems, setEquippedItems] = useState<string[]>([]);
+  const [coins, setCoins] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [purchaseError, setPurchaseError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
 
   const refreshShop = useCallback(async () => {
     try {
       setError(null);
-      const state = await getShopState();
-      setCoins(state.coins);
-      setItems(state.items);
-      setOwnedItemIds(state.ownedItemIds);
+      const inventory = await getShopInventory();
+      setItems(inventory.items);
+      setOwnedItemIds(inventory.ownedItemIds);
+      setEquippedItems(inventory.equippedItems);
+      setCoins(inventory.coins);
     } catch (refreshError) {
       setError(
         refreshError instanceof Error
@@ -45,10 +59,6 @@ export function ShopContent() {
           : "Could not load the shop.",
       );
       setCoins(0);
-      setItems([]);
-      setOwnedItemIds([]);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -61,29 +71,55 @@ export function ShopContent() {
     };
   }, [refreshShop]);
 
-  const handlePurchase = async (item: ShopItem) => {
-    if (pendingItemId) {
-      return;
-    }
+  const handlePurchase = async (itemId: string) => {
+    setPendingItemId(itemId);
 
     try {
-      setPurchaseError(null);
-      setPendingItemId(item.id);
-      const remainingCoins = await purchaseShopItem(item.id);
-      setCoins(remainingCoins);
-      setOwnedItemIds((current) =>
-        current.includes(item.id) ? current : [...current, item.id],
-      );
-    } catch (purchaseFailure) {
-      setPurchaseError(
-        purchaseFailure instanceof Error
-          ? purchaseFailure.message
-          : "Could not complete purchase.",
+      const item = await purchaseShopItem(itemId);
+      toast(`Purchased ${item.name}.`, "success");
+      await refreshShop();
+    } catch (purchaseError) {
+      toast(
+        purchaseError instanceof Error
+          ? purchaseError.message
+          : "Purchase failed.",
+        "error",
       );
     } finally {
       setPendingItemId(null);
     }
   };
+
+  const handleEquipToggle = async (item: ShopItemRecord) => {
+    setPendingItemId(item.id);
+
+    try {
+      const isEquipped = equippedItems.includes(item.id);
+
+      if (isEquipped) {
+        await unequipShopItem(item.id);
+        toast(`Unequipped ${item.name}.`, "default");
+      } else {
+        await equipShopItem(item.id);
+        toast(`Equipped ${item.name}.`, "success");
+      }
+
+      await refreshShop();
+    } catch (equipError) {
+      toast(
+        equipError instanceof Error ? equipError.message : "Could not equip item.",
+        "error",
+      );
+    } finally {
+      setPendingItemId(null);
+    }
+  };
+
+  const groupedItems = SHOP_LAYER_ORDER.map((layerId) => ({
+    layerId,
+    label: getLayerLabel(layerId),
+    items: items.filter((item) => item.type === layerId),
+  })).filter((group) => group.items.length > 0);
 
   return (
     <>
@@ -95,63 +131,76 @@ export function ShopContent() {
       </div>
 
       {error ? <p className="mb-4 text-sm text-red-500">{error}</p> : null}
-      {purchaseError ? (
-        <p className="mb-4 text-sm text-red-500">{purchaseError}</p>
-      ) : null}
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading shop items...</p>
-      ) : items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No items in the shop yet. Add rows to the shop_items table in
-          Supabase.
-        </p>
-      ) : (
-        <div className="grid gap-4">
-          {items.map((item) => {
-            const isOwned = ownedItemIds.includes(item.id);
-            const canAfford = coins !== null && coins >= item.price;
-            const isPending = pendingItemId === item.id;
+      <div className="grid gap-6">
+        {groupedItems.map((group) => (
+          <section key={group.layerId} className="grid gap-3">
+            <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              {group.label}
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {group.items.map((item) => {
+                const owned = ownedItemIds.includes(item.id);
+                const equipped = equippedItems.includes(item.id);
+                const canAfford = coins !== null && coins >= item.price;
+                const isPending = pendingItemId === item.id;
 
-            return (
-              <Card key={item.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="text-base">{item.name}</CardTitle>
-                      <CardDescription>
-                        {formatItemType(item.type)}
-                      </CardDescription>
-                    </div>
-                    <Badge>{item.price} pts</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    className="w-full"
-                    variant={isOwned ? "secondary" : "outline"}
-                    disabled={
-                      isOwned ||
-                      coins === null ||
-                      isPending ||
-                      (!isOwned && !canAfford)
-                    }
-                    onClick={() => void handlePurchase(item)}
-                  >
-                    {isOwned
-                      ? "Owned"
-                      : isPending
-                        ? "Purchasing..."
-                        : canAfford
-                          ? "Buy"
-                          : "Not enough points"}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                return (
+                  <Card key={item.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-14 items-center justify-center rounded-lg border bg-zinc-950/80 p-1.5">
+                            <TintedSpriteIcon
+                              src={item.image_path}
+                              color={DEFAULT_GRAY_COLOR.hsl}
+                              size={36}
+                            />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base">{item.name}</CardTitle>
+                            <CardDescription>{item.id}</CardDescription>
+                          </div>
+                        </div>
+                        <Badge>{item.price} pts</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="grid gap-2">
+                      {!owned ? (
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          disabled={coins === null || !canAfford || isPending}
+                          onClick={() => void handlePurchase(item.id)}
+                        >
+                          {isPending
+                            ? "Processing..."
+                            : canAfford
+                              ? "Buy"
+                              : "Not enough points"}
+                        </Button>
+                      ) : (
+                        <Button
+                          className="w-full"
+                          variant={equipped ? "default" : "outline"}
+                          disabled={isPending}
+                          onClick={() => void handleEquipToggle(item)}
+                        >
+                          {isPending
+                            ? "Updating..."
+                            : equipped
+                              ? "Equipped"
+                              : "Equip"}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
     </>
   );
 }

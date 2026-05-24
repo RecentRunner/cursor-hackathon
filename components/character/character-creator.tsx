@@ -7,25 +7,23 @@ import { CharacterColorSliders } from "@/components/character/character-color-sl
 import { CharacterLayerPreview } from "@/components/character/character-layer-preview";
 import { CharacterLayerTabs } from "@/components/character/character-layer-tabs";
 import { CharacterPieceSelector } from "@/components/character/character-piece-selector";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
 import { clampHsl } from "@/lib/character/color-utils";
 import {
   CHARACTER_LAYERS,
   COLOR_PRESETS,
   DEFAULT_GRAY_COLOR,
   LAYER_DEFAULT_COLORS,
+  NONE_VARIANT_ID,
   buildDefaultVariants,
   getLayerById,
   type ColorPreset,
 } from "@/lib/character/presets";
 import type { LayerColorState, LayerVariantState } from "@/lib/character/types";
-
-function buildInitialColors(): LayerColorState {
-  return { ...LAYER_DEFAULT_COLORS };
-}
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -35,10 +33,45 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function CharacterCreator() {
-  const [colors, setColors] = useState<LayerColorState>(buildInitialColors);
+type CharacterCreatorProps = {
+  initialCustomization?: AvatarCustomization;
+  name?: string;
+  onNameChange?: (name: string) => void;
+  showNameField?: boolean;
+  saveLabel?: string;
+  isSaving?: boolean;
+  ownedVariantIds?: string[];
+  onSave?: (customization: AvatarCustomization) => Promise<void>;
+};
+
+export function CharacterCreator({
+  initialCustomization,
+  name: controlledName,
+  onNameChange,
+  ownedVariantIds = [],
+  showNameField = false,
+  saveLabel = "Save avatar",
+  isSaving = false,
+  onSave,
+}: CharacterCreatorProps) {
+  const [internalName, setInternalName] = useState(
+    initialCustomization?.name ?? "Pixel Me",
+  );
+  const name = controlledName ?? internalName;
+
+  const setName = (nextName: string) => {
+    if (onNameChange) {
+      onNameChange(nextName);
+      return;
+    }
+
+    setInternalName(nextName);
+  };
+  const [colors, setColors] = useState<LayerColorState>(
+    initialCustomization?.colors ?? { ...LAYER_DEFAULT_COLORS },
+  );
   const [variants, setVariants] = useState<LayerVariantState>(
-    buildDefaultVariants,
+    initialCustomization?.variants ?? buildDefaultVariants(),
   );
   const [activePresetId, setActivePresetId] = useState<string>(
     DEFAULT_GRAY_COLOR.id,
@@ -46,10 +79,17 @@ export function CharacterCreator() {
   const [activeLayerId, setActiveLayerId] = useState<
     (typeof CHARACTER_LAYERS)[number]["id"]
   >("skin");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const activeLayer = getLayerById(activeLayerId);
   const activeColor = colors[activeLayerId];
-  const pieceVariants = activeLayer.allowVariants ? activeLayer.variants : [];
+  const ownedSet = new Set(ownedVariantIds);
+  const pieceVariants = activeLayer.allowVariants
+    ? activeLayer.variants.filter(
+        (variant) =>
+          variant.id === NONE_VARIANT_ID || ownedSet.has(variant.id),
+      )
+    : [];
 
   const applyPreset = (preset: ColorPreset) => {
     setActivePresetId(preset.id);
@@ -86,8 +126,45 @@ export function CharacterCreator() {
     }));
   };
 
+  const buildCustomization = (): AvatarCustomization => ({
+    name,
+    colors,
+    variants,
+    customized: true,
+    equippedItems: initialCustomization?.equippedItems ?? [],
+  });
+
+  const handleSave = async () => {
+    if (!onSave) {
+      return;
+    }
+
+    setSaveError(null);
+
+    try {
+      await onSave(buildCustomization());
+    } catch (error) {
+      setSaveError(
+        error instanceof Error ? error.message : "Could not save avatar.",
+      );
+    }
+  };
+
   return (
     <div className="grid gap-5">
+      {showNameField ? (
+        <div className="grid max-w-md gap-2">
+          <Label htmlFor="avatar-name">Pet name</Label>
+          <Input
+            id="avatar-name"
+            value={name}
+            maxLength={32}
+            placeholder="Name your pet"
+            onChange={(event) => setName(event.target.value)}
+          />
+        </div>
+      ) : null}
+
       <CharacterLayerTabs
         activeLayerId={activeLayerId}
         onLayerChange={handleLayerChange}
@@ -138,6 +215,22 @@ export function CharacterCreator() {
                 onChange={updateActiveColor}
               />
             </section>
+
+            {onSave ? (
+              <div className="grid gap-2 pt-1">
+                <Button
+                  id="avatar-customization-save"
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => void handleSave()}
+                >
+                  {isSaving ? "Saving..." : saveLabel}
+                </Button>
+                {saveError ? (
+                  <p className="text-sm text-red-500">{saveError}</p>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { applyEquippedItemsToVariants } from "@/lib/avatar-display";
 import {
   drawTintedSprite,
   getCachedImage,
@@ -17,15 +18,19 @@ import { cn } from "@/lib/utils";
 type CharacterLayerPreviewProps = {
   colors: LayerColorState;
   variants: LayerVariantState;
+  equippedItems?: string[];
   scale?: number;
   className?: string;
+  compact?: boolean;
 };
 
 export function CharacterLayerPreview({
   colors,
   variants,
+  equippedItems = [],
   scale = 10,
   className,
+  compact = false,
 }: CharacterLayerPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
@@ -40,8 +45,13 @@ export function CharacterLayerPreview({
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) return;
 
+      const displayVariants = applyEquippedItemsToVariants(
+        variants,
+        equippedItems,
+      );
+
       const activeLayers = CHARACTER_LAYERS.flatMap((layer) => {
-        const selected = getSelectedVariant(layer.id, variants[layer.id]);
+        const selected = getSelectedVariant(layer.id, displayVariants[layer.id]);
         if (!selected) return [];
         return [{ layer, variant: selected }];
       });
@@ -90,12 +100,13 @@ export function CharacterLayerPreview({
     return () => {
       cancelled = true;
     };
-  }, [colors, variants, scale]);
+  }, [colors, variants, equippedItems, scale]);
 
   return (
     <div
       className={cn(
-        "relative flex h-[320px] items-center justify-center",
+        "relative flex items-center justify-center",
+        compact ? "h-[180px]" : "h-[320px]",
         className,
       )}
     >

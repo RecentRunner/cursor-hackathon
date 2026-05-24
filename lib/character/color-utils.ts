@@ -120,6 +120,16 @@ export function rgbToHex({ r, g, b }: RGB): string {
     .join("")}`;
 }
 
+export function hslToHex(hsl: HSL): string {
+  const rgb = hslToRgb(hsl.h, hsl.s, hsl.l);
+  return rgbToHex(rgb);
+}
+
+export function hexToHsl(hex: string): HSL {
+  const rgb = hexToRgb(hex);
+  return rgbToHsl(rgb.r, rgb.g, rgb.b);
+}
+
 /** Tint a monochrome sprite by mapping pixel brightness to the target color. */
 export function tintImageData(imageData: ImageData, color: RGB): void {
   const { data } = imageData;

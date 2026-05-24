@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { PixelAvatar } from "@/components/avatar/pixel-avatar";
+import { CharacterLayerPreview } from "@/components/character/character-layer-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import type { AvatarCustomization } from "@/lib/avatar-customization-storage";
 import {
   defaultAvatarCondition,
   WELLNESS_SCALE_MAX,
@@ -21,7 +19,11 @@ import {
 } from "@/lib/daily-quiz-storage";
 import { routes } from "@/lib/routes";
 
-export function AvatarStatusCard() {
+type AvatarStatusCardProps = {
+  customization: AvatarCustomization;
+};
+
+export function AvatarStatusCard({ customization }: AvatarStatusCardProps) {
   const [condition, setCondition] = useState<AvatarCondition>(
     defaultAvatarCondition,
   );
@@ -54,7 +56,21 @@ export function AvatarStatusCard() {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4 pt-6">
-        <PixelAvatar mood={condition.mood} />
+        <div className="text-center">
+          <p className="text-lg font-semibold tracking-tight">
+            {customization.name}
+          </p>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            {condition.mood}
+          </p>
+        </div>
+        <CharacterLayerPreview
+          colors={customization.colors}
+          variants={customization.variants}
+          equippedItems={customization.equippedItems}
+          scale={8}
+          className="w-full max-w-xs"
+        />
         <div className="flex flex-wrap justify-center gap-2">
           <Badge variant="secondary">
             Energy {condition.energy}/{WELLNESS_SCALE_MAX}
