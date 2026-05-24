@@ -25,6 +25,7 @@ import {
 } from "@/lib/daily-reminders";
 import { getDailyReminderStatus } from "@/lib/daily-reminder-status";
 import { getTodayDateKey } from "@/lib/habits-storage";
+import { resetTodaysDailyQuiz } from "@/lib/daily-quiz-storage";
 import {
   reminderDeliveryOptions,
   usesSystemReminders,
@@ -56,6 +57,8 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
   const [notificationMessage, setNotificationMessage] = useState<string | null>(
     null,
   );
+  const [quizResetMessage, setQuizResetMessage] = useState<string | null>(null);
+  const [isResettingQuiz, setIsResettingQuiz] = useState(false);
 
   useEffect(() => {
     setNotificationPermission(getNotificationPermissionState());
@@ -207,6 +210,27 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
     setNotificationMessage(
       "Test reminder sent in-app and through your browser notification center.",
     );
+  };
+
+  const handleResetDailyQuiz = async () => {
+    setQuizResetMessage(null);
+    setError(null);
+    setIsResettingQuiz(true);
+
+    try {
+      await resetTodaysDailyQuiz();
+      setQuizResetMessage(
+        "Today's quiz was reset. Open the Quiz tab to take it again.",
+      );
+    } catch (resetError) {
+      setError(
+        resetError instanceof Error
+          ? resetError.message
+          : "Could not reset today's quiz.",
+      );
+    } finally {
+      setIsResettingQuiz(false);
+    }
   };
 
   if (!isReady) {
@@ -361,6 +385,33 @@ export function ProfilePreferencesForm({ email }: ProfilePreferencesFormProps) {
           </Button>
           {notificationMessage ? (
             <p className="text-xs text-emerald-600">{notificationMessage}</p>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Demo tools</CardTitle>
+          <CardDescription>
+            Shortcuts for testing flows without waiting for the daily reset.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Reset clears today&apos;s wellness quiz entry so you can complete it
+            again immediately.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isSaving || isResettingQuiz}
+            onClick={() => void handleResetDailyQuiz()}
+          >
+            {isResettingQuiz ? "Resetting..." : "Reset today's quiz"}
+          </Button>
+          {quizResetMessage ? (
+            <p className="text-xs text-emerald-600">{quizResetMessage}</p>
           ) : null}
         </CardContent>
       </Card>

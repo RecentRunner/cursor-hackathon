@@ -5,6 +5,11 @@ import {
   type DailyQuizSubmission,
 } from "@/lib/avatar-state";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
+import {
+  getMillisecondsUntilLocalMidnight,
+  getNextLocalMidnight,
+  getTodayDateKey,
+} from "@/lib/date-keys";
 import { computeAvatarConditionWithHabitBoosts } from "@/lib/habit-wellness-effects";
 import { getCompletedHabitLabelsForToday } from "@/lib/habits-storage";
 import { validateJournalEntry } from "@/lib/journal-safety";
@@ -20,8 +25,45 @@ type DailyEntryRow = {
   journal: string | null;
 };
 
-export function getTodayDateKey(date = new Date()) {
-  return date.toISOString().slice(0, 10);
+export { getTodayDateKey };
+
+export function getNextDailyQuizAvailableAt(from = new Date()) {
+  return getNextLocalMidnight(from);
+}
+
+export function getMillisecondsUntilNextDailyQuiz(from = new Date()) {
+  return getMillisecondsUntilLocalMidnight(from);
+}
+
+export function formatDailyQuizCountdown(milliseconds: number) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+export async function resetTodaysDailyQuiz() {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    throw new Error("You must be signed in to reset today's quiz.");
+  }
+
+  const supabase = createClient();
+  const entryDate = getTodayDateKey();
+  const { error } = await supabase
+    .from("daily_entries")
+    .delete()
+    .eq("user_id", userId)
+    .eq("entry_date", entryDate);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  notifyHabitPetDataUpdated();
 }
 
 function mapRowToSubmission(

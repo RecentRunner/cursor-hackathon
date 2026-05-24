@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { WellnessSlider } from "@/components/daily-quiz/wellness-slider";
+import { DailyQuizCountdown } from "@/components/daily-quiz/daily-quiz-countdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,7 @@ import {
   getCachedQuizTabData,
   prefetchQuizTabData,
 } from "@/lib/app-tab-data-cache";
+import { HABIT_PET_DATA_UPDATED_EVENT } from "@/lib/app-events";
 import { saveDailyEntry } from "@/lib/daily-quiz-storage";
 import { JOURNAL_MAX_LENGTH } from "@/lib/journal-safety";
 import { routes } from "@/lib/routes";
@@ -63,7 +65,7 @@ export function DailyQuizForm() {
 
     async function loadDailyCheckIn() {
       try {
-        const data = await prefetchQuizTabData();
+        const data = await prefetchQuizTabData({ force: true });
 
         if (cancelled) {
           return;
@@ -89,8 +91,15 @@ export function DailyQuizForm() {
 
     void loadDailyCheckIn();
 
+    const handleDataUpdated = () => {
+      void loadDailyCheckIn();
+    };
+
+    window.addEventListener(HABIT_PET_DATA_UPDATED_EVENT, handleDataUpdated);
+
     return () => {
       cancelled = true;
+      window.removeEventListener(HABIT_PET_DATA_UPDATED_EVENT, handleDataUpdated);
     };
   }, [applyQuizData]);
 
@@ -161,6 +170,11 @@ export function DailyQuizForm() {
                 </Link>{" "}
                 whenever you want to see how they are doing.
               </p>
+              <DailyQuizCountdown
+                onAvailable={() => {
+                  void prefetchQuizTabData({ force: true }).then(applyQuizData);
+                }}
+              />
             </div>
           </CardContent>
         </Card>
