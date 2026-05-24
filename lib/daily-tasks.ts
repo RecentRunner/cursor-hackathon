@@ -1,7 +1,6 @@
 import type { DailyQuizAnswers } from "@/lib/avatar-state";
 import { getDailyEntryForToday } from "@/lib/daily-quiz-storage";
 import {
-  catalogHabitIds,
   getCatalogEntry,
   habitCatalog,
   matchesFocusTopics,
