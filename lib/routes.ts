@@ -23,25 +23,10 @@ export const appNavItems = [
 
 export type NavItem = (typeof appNavItems)[number];
 
-const appPaths = [
-  routes.avatar,
-  routes.habits,
-  routes.dailyQuiz,
-  routes.shop,
-  routes.profile,
-  routes.onboardingQuiz,
-] as const;
-
 export function isAuthPath(pathname: string) {
   return pathname.startsWith("/auth");
 }
 
 export function isPublicPath(pathname: string) {
-  return (
-    pathname === routes.home ||
-    isAuthPath(pathname) ||
-    appPaths.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
-    )
-  );
+  return pathname === routes.home || isAuthPath(pathname);
 }
