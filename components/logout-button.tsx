@@ -1,5 +1,6 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -16,5 +17,14 @@ export function LogoutButton() {
     router.refresh();
   };
 
-  return <Button onClick={logout}>Logout</Button>;
+  return (
+    <Button
+      onClick={logout}
+      aria-label="Logout"
+      className="h-10 w-10 shrink-0 px-0 sm:w-auto sm:px-4"
+    >
+      <LogOut aria-hidden="true" className="sm:hidden" />
+      <span className="hidden sm:inline">Logout</span>
+    </Button>
+  );
 }
