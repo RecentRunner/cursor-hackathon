@@ -24,6 +24,7 @@ import {
   type ColorPreset,
 } from "@/lib/character/presets";
 import type { LayerColorState, LayerVariantState } from "@/lib/character/types";
+import { isVariantUnlocked } from "@/lib/character/variant-access";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -84,12 +85,16 @@ export function CharacterCreator({
   const activeLayer = getLayerById(activeLayerId);
   const activeColor = colors[activeLayerId];
   const ownedSet = new Set(ownedVariantIds);
-  const pieceVariants = activeLayer.allowVariants
-    ? activeLayer.variants.filter(
+  const pieceVariants = activeLayer.allowVariants ? activeLayer.variants : [];
+  const lockedVariantIds = new Set(
+    pieceVariants
+      .filter(
         (variant) =>
-          variant.id === NONE_VARIANT_ID || ownedSet.has(variant.id),
+          variant.id !== NONE_VARIANT_ID &&
+          !isVariantUnlocked(variant.id, ownedSet),
       )
-    : [];
+      .map((variant) => variant.id),
+  );
 
   const applyPreset = (preset: ColorPreset) => {
     setActivePresetId(preset.id);
@@ -120,6 +125,10 @@ export function CharacterCreator({
   };
 
   const handleVariantChange = (variantId: string) => {
+    if (!isVariantUnlocked(variantId, ownedSet)) {
+      return;
+    }
+
     setVariants((current) => ({
       ...current,
       [activeLayerId]: variantId,
@@ -189,6 +198,7 @@ export function CharacterCreator({
               <div className="min-h-14">
                 <CharacterPieceSelector
                   variants={pieceVariants}
+                  lockedVariantIds={lockedVariantIds}
                   activeId={variants[activeLayerId]}
                   color={activeColor}
                   skinColor={colors.skin}

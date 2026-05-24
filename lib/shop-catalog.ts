@@ -1,3 +1,4 @@
+import { isShopOnlyStyleVariant } from "@/lib/character/variant-access";
 import type { CharacterLayerId } from "@/lib/character/presets";
 import { CHARACTER_LAYERS, NONE_VARIANT_ID } from "@/lib/character/presets";
 
@@ -57,7 +58,10 @@ export function getShopCatalogFromPresets(): ShopItemRecord[] {
     }
 
     return layer.variants
-      .filter((variant) => variant.id !== NONE_VARIANT_ID)
+      .filter(
+        (variant) =>
+          variant.id !== NONE_VARIANT_ID && isShopOnlyStyleVariant(variant.id),
+      )
       .map((variant) => ({
         id: variant.id,
         name: variant.label,

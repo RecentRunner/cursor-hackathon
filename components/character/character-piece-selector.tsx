@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleSlash } from "lucide-react";
+import { CircleSlash, Lock } from "lucide-react";
 
 import type { HSL } from "@/lib/character/color-utils";
 import { NONE_VARIANT_ID, PIECE_SLOT_COUNT } from "@/lib/character/presets";
@@ -11,6 +11,7 @@ import { TintedSpriteIcon } from "./tinted-sprite-icon";
 
 type CharacterPieceSelectorProps = {
   variants: LayerVariant[];
+  lockedVariantIds?: ReadonlySet<string>;
   activeId: string;
   color: HSL;
   skinColor?: HSL;
@@ -19,6 +20,7 @@ type CharacterPieceSelectorProps = {
 
 export function CharacterPieceSelector({
   variants,
+  lockedVariantIds,
   activeId,
   color,
   skinColor,
@@ -66,19 +68,29 @@ export function CharacterPieceSelector({
           );
         }
 
+        const locked = lockedVariantIds?.has(variant.id) ?? false;
+
         return (
           <button
             key={variant.id}
             type="button"
-            title={variant.label}
-            aria-label={variant.label}
+            disabled={locked}
+            aria-disabled={locked}
+            title={
+              locked ? `${variant.label} — unlock in the shop` : variant.label
+            }
+            aria-label={
+              locked ? `${variant.label}, locked — unlock in the shop` : variant.label
+            }
             aria-pressed={activeId === variant.id}
             onClick={() => onSelect(variant.id)}
             className={cn(
-              "flex size-14 items-center justify-center rounded-lg border bg-zinc-950/80 p-1.5 transition-colors",
-              activeId === variant.id
-                ? "border-foreground bg-zinc-900 shadow-[inset_0_0_0_1px_hsl(var(--foreground)/0.15)]"
-                : "border-border/60 hover:border-border hover:bg-zinc-900/60",
+              "relative flex size-14 items-center justify-center rounded-lg border bg-zinc-950/80 p-1.5 transition-colors",
+              locked
+                ? "cursor-not-allowed border-border/40 opacity-80"
+                : activeId === variant.id
+                  ? "border-foreground bg-zinc-900 shadow-[inset_0_0_0_1px_hsl(var(--foreground)/0.15)]"
+                  : "border-border/60 hover:border-border hover:bg-zinc-900/60",
             )}
           >
             <TintedSpriteIcon
@@ -87,6 +99,14 @@ export function CharacterPieceSelector({
               skinColor={skinColor}
               size={36}
             />
+            {locked ? (
+              <span
+                aria-hidden
+                className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/75"
+              >
+                <Lock className="size-4 text-muted-foreground" strokeWidth={2.25} />
+              </span>
+            ) : null}
           </button>
         );
       })}
