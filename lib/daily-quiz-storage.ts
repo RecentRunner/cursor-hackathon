@@ -6,6 +6,7 @@ import {
   type DailyQuizSubmission,
 } from "@/lib/avatar-state";
 import { notifyHabitPetDataUpdated } from "@/lib/app-events";
+import { validateJournalEntry } from "@/lib/journal-safety";
 import { createClient } from "@/lib/supabase/client";
 
 type DailyEntryRow = {
@@ -107,6 +108,7 @@ export async function saveDailyEntry(
   const supabase = createClient();
   const entryDate = getTodayDateKey();
   const normalizedAnswers = normalizeDailyQuizAnswers(answers);
+  const sanitizedJournal = validateJournalEntry(journal);
 
   const { data, error } = await supabase
     .from("daily_entries")
@@ -119,7 +121,7 @@ export async function saveDailyEntry(
         energy: normalizedAnswers.energy,
         sleep_hours: normalizedAnswers.sleepLength,
         sleep_quality: normalizedAnswers.sleepQuality,
-        journal,
+        journal: sanitizedJournal,
       },
       { onConflict: "user_id,entry_date" },
     )

@@ -3,6 +3,14 @@ import {
   sanitizePlausibleAiTaskLabels,
 } from "@/lib/ai-habit-utils";
 import {
+  extractSafeJsonTaskArray,
+  UnsafeAiOutputError,
+} from "@/lib/ai-output-safety";
+import {
+  AI_TASK_SYSTEM_PROMPT,
+  buildAiTaskUserPrompt,
+} from "@/lib/ai-prompt-security";
+import {
   formatAiTaskContextForPrompt,
   type AiTaskContext,
 } from "@/lib/ai-task-context";
@@ -17,21 +25,6 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 export const DEFAULT_OPENROUTER_MODEL =
   process.env.OPENROUTER_MODEL ?? "google/gemma-2-9b-it:free";
-
-function extractJsonArray(content: string) {
-  const start = content.indexOf("[");
-  const end = content.lastIndexOf("]");
-
-  if (start === -1 || end === -1 || end <= start) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(content.slice(start, end + 1)) as unknown;
-  } catch {
-    return null;
-  }
-}
 
 export async function generateAiTaskLabels(
   context: AiTaskContext,
@@ -61,14 +54,14 @@ export async function generateAiTaskLabels(
       messages: [
         {
           role: "system",
-          content:
-            "You are a supportive wellness coach for a habit-tracking pet app. Suggest practical, specific daily habits tailored to the user's data. Each task must be a concrete action the user can check off (e.g. 'Drink a full glass of water', 'Go for a swim'). Never suggest vague tasks like 'spend time on hydration', single-word activities like 'Running', or duplicate tasks for the same activity. Never use abstract focus topics (sleep, movement, hydration, mindfulness) as task names. The journal entry reflects what the user wants to do today — if they mention an activity (e.g. swimming, running, yoga), include a closely related check-off task when appropriate. Return ONLY a JSON array of strings. Each string must be a short habit label under 8 words.",
+          content: AI_TASK_SYSTEM_PROMPT,
         },
         {
           role: "user",
-          content: `${formatAiTaskContextForPrompt(context)}
-
-${buildGenerationUserPrompt(context, options)}`,
+          content: buildAiTaskUserPrompt(
+            formatAiTaskContextForPrompt(context),
+            buildGenerationUserPrompt(context, options),
+          ),
         },
       ],
     }),
@@ -88,11 +81,23 @@ ${buildGenerationUserPrompt(context, options)}`,
   const content = payload.choices?.[0]?.message?.content?.trim();
 
   if (!content) {
-    throw new Error("OpenRouter returned an empty response.");
+    throw new UnsafeAiOutputError("OpenRouter returned an empty response.");
+  }
+
+  let parsedLabels: string[];
+
+  try {
+    parsedLabels = extractSafeJsonTaskArray(content);
+  } catch (error) {
+    if (error instanceof UnsafeAiOutputError) {
+      throw error;
+    }
+
+    throw new UnsafeAiOutputError("OpenRouter response failed safety validation.");
   }
 
   const labels = mergeJournalHintsIntoLabels(
-    sanitizePlausibleAiTaskLabels(extractJsonArray(content) ?? []),
+    sanitizePlausibleAiTaskLabels(parsedLabels),
     context,
     { fillInOnly: true, maxCount, excludeLabels: options?.excludeLabels },
   );

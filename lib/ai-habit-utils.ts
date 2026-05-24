@@ -3,6 +3,7 @@ import {
   filterExcludedSimilarTaskLabels,
   isPlausibleTaskLabel,
 } from "@/lib/ai-task-guardrails";
+import { isSafeAiTaskLabel } from "@/lib/ai-output-safety";
 import {
   MAX_DAILY_AI_TASKS,
   type AiTaskGenerationOptions,
@@ -43,6 +44,10 @@ export function sanitizeAiTaskLabels(
     .map(normalizeAiTaskLabel)
     .filter((label) => label.length > 0)
     .filter((label) => {
+      if (!isSafeAiTaskLabel(label)) {
+        return false;
+      }
+
       if (options?.requirePlausible && !isPlausibleTaskLabel(label)) {
         return false;
       }

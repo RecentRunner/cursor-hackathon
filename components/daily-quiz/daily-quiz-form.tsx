@@ -29,6 +29,7 @@ import {
   getDailyEntryForToday,
   saveDailyEntry,
 } from "@/lib/daily-quiz-storage";
+import { JOURNAL_MAX_LENGTH } from "@/lib/journal-safety";
 
 export function DailyQuizForm() {
   const [answers, setAnswers] = useState<DailyQuizAnswers>(
@@ -242,10 +243,16 @@ export function DailyQuizForm() {
             id="journal"
             value={journal}
             disabled={isCompleted}
+            maxLength={JOURNAL_MAX_LENGTH}
             onChange={(event) => setJournal(event.target.value)}
             className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
             placeholder="Write about your day."
           />
+          {!isCompleted ? (
+            <p className="text-xs text-muted-foreground">
+              {journal.length}/{JOURNAL_MAX_LENGTH} characters
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
