@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { PixelAvatar } from "@/components/avatar/pixel-avatar";
-import { LoggedInRedirect } from "@/components/layout/logged-in-redirect";
+import { LandingHeroActions } from "@/components/layout/landing-hero-actions";
 import { SiteFooter, SiteHeader } from "@/components/layout/site-header";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,15 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { routes } from "@/lib/routes";
 
 export default function Home() {
   return (
     <main className="flex min-h-svh flex-col">
-      <Suspense fallback={null}>
-        <LoggedInRedirect />
-      </Suspense>
-
       <SiteHeader />
 
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-5 py-12">
@@ -37,14 +30,9 @@ export default function Home() {
               into a simple game. Keep streaks alive, take your once-per-day
               quiz, and watch your pet change with you.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg">
-                <Link href={routes.signUp}>Get started</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href={routes.login}>Sign in</Link>
-              </Button>
-            </div>
+            <Suspense fallback={null}>
+              <LandingHeroActions />
+            </Suspense>
           </div>
 
           <Card className="border-dashed">
